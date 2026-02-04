@@ -1,36 +1,32 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Bank Transaction App
+An app where people upload their bank PDF files, and shown their purchases listing the categories and the amount of money used.
 
-## Getting Started
+## Features
+* Show the UI to upload only bank PDF statements (other PDF not accepted?)
+* Parsing bank PDFs about their transactions, focusing on description, withdrawal and deposit calculating amount in red (negative for withdrawal) and deposit in green (positive for deposit)
+-------------------------------------------------------------------------
+* From extracted text, read through the description and categorize monthly
+* Categorize by groceries, transport, utilities, rent, education, shopping, food, misc. etc. Using AI-based categorization (Optional)
+[Easily explained categorization, as test: PTV, groceries (anything with supermarket ex.)]
+* Storing transactions in database (Priority pending)
+* Visualize the data with categories and amount of money, showing monthly insights
+* Optional: Export reports
 
-First, run the development server:
+## Configurations / Tech Stack
+* ~~Frontend~~ Full Stack - Next.js (works for client-server)
+* ~~Backend (Python - good PDF Parsing according to research)~~
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Test Cases
+* PDF uploaded, with extracted text matching with the PDF itself (Works, referenced from another GitHub PDF Parser)
+* Extracted text can be parsed, specifically description, withdrawal and deposit (Pending - Not giving a reasonable amount currently)
+* Amount will be calculated depending on withdrawal and deposit, in positive (green) or negative (red) (See test above)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Current Progress
+* PDF upload worked, now trying to parse through PDF bank statements. Results: Between looking through any numbers in the statement and giving an astronomical amount or not noticing any numbers within the table due to single/multi-line transactions etc
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+>What to work with: Ensuring that the pdf parser reads  through the table in any bank statement, regardless of any organization formatting whether it's date or header or titles to the description, withdrawal, deposit and balance = Research required
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-## Learn More
 
-To learn more about Next.js, take a look at the following resources:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
