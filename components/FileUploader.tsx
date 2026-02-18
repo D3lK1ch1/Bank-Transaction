@@ -25,6 +25,7 @@ export default function FileUpload({
   setParsedText: (text: string) => void;
   maxSize: number;
 }) {
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [filesToUpload, setFilesToUpload] = useState<FileUploadProgress[]>([]);
 
   const getFileIconAndColor = (file: File) => {
@@ -48,6 +49,7 @@ export default function FileUpload({
     const formData = new FormData();
     formData.append("FILE", file);
 
+    setErrorMsg(null);
     try {
       const response = await fetch("/api/parse-data", {
         method: "POST",
@@ -55,26 +57,38 @@ export default function FileUpload({
       });
 
       if (!response.ok) {
-        const error = await response.text();
-        throw new Error(error || "Failed to upload file");
+        const text = await response.text();
+        // try parse JSON error
+        try {
+          const err = JSON.parse(text);
+          throw new Error(err.error || text || "Failed to upload file");
+        } catch {
+          throw new Error(text || "Failed to upload file");
+        }
       }
 
       const data = await response.json();
       setParsedText(JSON.stringify(data, null, 2));
     } catch (error) {
       console.error("Error uploading file:", error);
-      setParsedText(`Error: ${error instanceof Error ? error.message : String(error)}`);
+      const message = error instanceof Error ? error.message : String(error);
+      setErrorMsg(message);
+      setParsedText(`Error: ${message}`);
     }
   };
 
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
       if (acceptedFiles.length > 1) {   
-        alert("You can only upload one file at a time.");
+        setErrorMsg("You can only upload one file at a time.");
         return;
       }
 
       const file = acceptedFiles[0];
+      if (file.size > maxSize) {
+        setErrorMsg("File too large. Max 8MB.");
+        return;
+      }
       setFilesToUpload([{ file, progress: 100 }]);
       onFileUpload(file);
       await uploadFileToApi(file);
@@ -154,7 +168,11 @@ export default function FileUpload({
                     </div>
                     <button
                       onClick={() => removeFile(fileUploadProgress.file)}
-                      className="bg-red-500 text-white transition-all items-center justify-center cursor-pointer px-2 hidden group-hover:flex"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') removeFile(fileUploadProgress.file);
+                      }}
+                      aria-label={`Remove ${fileUploadProgress.file.name}`}
+                      className="bg-red-500 text-white transition-all items-center justify-center cursor-pointer px-2 hidden group-hover:flex focus:outline focus:ring"
                     >
                       <X size={20} />
                     </button>

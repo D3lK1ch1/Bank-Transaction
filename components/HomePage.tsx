@@ -23,6 +23,7 @@ const PDFParser = () => {
   const [parsedData, setParsedData] = useState<ParsedData | null>(null); 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const resultsRef = React.useRef<HTMLDivElement | null>(null);
 
   const handleFileUpload = async (file: File) => {
     setUploadedFile(() => {
@@ -40,7 +41,11 @@ const PDFParser = () => {
               setParsedText={(text: string) => {
                 try {
                   const data = JSON.parse(text);
-                  setParsedData(data);
+                      setParsedData(data);
+                      // move focus to results for screen readers
+                      setTimeout(() => {
+                        resultsRef.current?.focus();
+                      }, 50);
                 } catch (e) {
                   setError("Failed to parse response. Please try again.");
                   console.error("Parse error:", e);
@@ -60,7 +65,7 @@ const PDFParser = () => {
           </div>
         )}
         {parsedData && (
-          <div className="mt-6 w-full">
+          <div id="main-content" ref={resultsRef} tabIndex={-1} className="mt-6 w-full" aria-live="polite">
             <TransactionDisplay 
               transactions={parsedData.transactions}
               categorized={parsedData.categorized}

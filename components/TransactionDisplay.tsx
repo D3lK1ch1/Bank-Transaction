@@ -1,8 +1,6 @@
 'use client'
 
-import React, { useMemo } from "react";
-import type { Transaction } from "@/lib/transactionParser";
-
+import { Transaction } from "@/lib/transactionParser";
 interface TransactionDisplayProps {
   transactions: Transaction[];
   categorized: Record<string, Transaction[]>;
@@ -20,6 +18,10 @@ export default function TransactionDisplay({
   monthlyGrouped,
   summary,
 }: TransactionDisplayProps) {
+  const getDeposit = (t: Transaction) => (t.type === "credit" ? Math.abs(t.amount) : 0);
+  const getWithdrawal = (t: Transaction) => (t.type === "debit" ? Math.abs(t.amount) : 0);
+  const getSignedAmount = (t: Transaction) => (t.type === "debit" ? -Math.abs(t.amount) : Math.abs(t.amount));
+
   const categoryColors: Record<string, string> = {
     groceries: "bg-green-100 text-green-800",
     transport: "bg-blue-100 text-blue-800",
@@ -84,11 +86,11 @@ export default function TransactionDisplay({
               .sort()
               .map(([month, monthTransactions]) => {
                 const deposits = monthTransactions.reduce(
-                  (sum, t) => sum + t.deposit,
+                  (sum, t) => sum + getDeposit(t),
                   0
                 );
                 const withdrawals = monthTransactions.reduce(
-                  (sum, t) => sum + t.withdrawal,
+                  (sum, t) => sum + getWithdrawal(t),
                   0
                 );
                 const net = deposits - withdrawals;
@@ -135,17 +137,17 @@ export default function TransactionDisplay({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {Object.entries(categorized)
               .sort(([, a], [, b]) => {
-                const totalA = a.reduce((sum, t) => sum + Math.abs(t.amount), 0);
-                const totalB = b.reduce((sum, t) => sum + Math.abs(t.amount), 0);
+                const totalA = a.reduce((sum, t) => sum + Math.abs(getSignedAmount(t)), 0);
+                const totalB = b.reduce((sum, t) => sum + Math.abs(getSignedAmount(t)), 0);
                 return totalB - totalA;
               })
               .map(([category, categoryTransactions]) => {
                 const total = categoryTransactions.reduce(
-                  (sum, t) => sum + t.amount,
+                  (sum, t) => sum + getSignedAmount(t),
                   0
                 );
                 const totalAbsolute = categoryTransactions.reduce(
-                  (sum, t) => sum + Math.abs(t.amount),
+                  (sum, t) => sum + Math.abs(getSignedAmount(t)),
                   0
                 );
 
@@ -190,9 +192,9 @@ export default function TransactionDisplay({
                   <th className="text-left p-3 font-semibold">Date</th>
                   <th className="text-left p-3 font-semibold">Description</th>
                   <th className="text-left p-3 font-semibold">Category</th>
-                  <th className="text-right p-3 font-semibold">Withdrawal</th>
-                  <th className="text-right p-3 font-semibold">Deposit</th>
-                  <th className="text-right p-3 font-semibold">Amount</th>
+                  <th className="text-right p-3 font-semibold tabular-nums">Withdrawal</th>
+                  <th className="text-right p-3 font-semibold tabular-nums">Deposit</th>
+                  <th className="text-right p-3 font-semibold tabular-nums">Amount</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
@@ -211,25 +213,25 @@ export default function TransactionDisplay({
                         {transaction.category || "misc"}
                       </span>
                     </td>
-                    <td className="p-3 text-right text-red-600 font-medium">
-                      {transaction.withdrawal > 0
-                        ? `-$${transaction.withdrawal.toFixed(2)}`
+                    <td className="p-3 text-right text-red-600 font-medium tabular-nums">
+                      {getWithdrawal(transaction) > 0
+                        ? `-$${getWithdrawal(transaction).toFixed(2)}`
                         : "-"}
                     </td>
-                    <td className="p-3 text-right text-green-600 font-medium">
-                      {transaction.deposit > 0
-                        ? `+$${transaction.deposit.toFixed(2)}`
+                    <td className="p-3 text-right text-green-600 font-medium tabular-nums">
+                      {getDeposit(transaction) > 0
+                        ? `+$${getDeposit(transaction).toFixed(2)}`
                         : "-"}
                     </td>
                     <td
-                      className={`p-3 text-right font-bold ${
-                        transaction.amount >= 0
+                      className={`p-3 text-right font-bold tabular-nums ${
+                        getSignedAmount(transaction) >= 0
                           ? "text-green-600"
                           : "text-red-600"
                       }`}
                     >
-                      {transaction.amount >= 0 ? "+" : ""}
-                      ${transaction.amount.toFixed(2)}
+                      {getSignedAmount(transaction) >= 0 ? "+" : ""}
+                      ${getSignedAmount(transaction).toFixed(2)}
                     </td>
                   </tr>
                 ))}
