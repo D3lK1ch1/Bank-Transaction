@@ -16,7 +16,7 @@ interface ParsedData {
 
 export function parseTransactions(rawText: string): ParsedData {
   const lines = rawText.split('\n').map(line => line.trim()).filter(l => l);
-  console.log('First 30 lines after slicing:', lines.slice(0, 30));
+  console.log('Report:', lines.slice(100, 1000));
   const transactions: Transaction[] = [];
   
   let i = 0;
@@ -32,12 +32,18 @@ export function parseTransactions(rawText: string): ParsedData {
   
   // Filter out page totals and summaries
   const filtered = filterSummaryRows(transactions);
+
+  // Add category to each transaction
+  const transactionsWithCategories = filtered.map(t => ({
+    ...t,
+    category: getCategoryFromDescription(t.description)
+  }));
   
   return {
-    transactions: filtered,
-    categorized: categorizeTransactions(filtered),
-    monthlyGrouped: groupByMonth(filtered),
-    summary: generateSummary(filtered),
+    transactions: transactionsWithCategories,
+    categorized: categorizeTransactions(transactionsWithCategories),
+    monthlyGrouped: groupByMonth(transactionsWithCategories),
+    summary: generateSummary(transactionsWithCategories),
   };
 }
 
@@ -101,6 +107,29 @@ function extractTransaction(
   };
 }
 
+function getCategoryFromDescription(description: string): string {
+  const lowerDesc = description.toLowerCase();
+  const categories: Record<string, string[]> = {
+      groceries: ['coles', 'woolworths', 'iga', 'supermarket'],
+      transport: ['ptv', 'uber', 'didi', 'ola', 'taxi', 'public transport'],
+      utilities: ['energy', 'water', 'gas', 'internet', 'telstra', 'optus'],
+      rent: ['rent', 'real estate'],
+      education: ['university', 'tafe', 'school', 'education'],
+      shopping: ['kmart', 'target', 'big w', 'shopping', 'myer', 'david jones'],
+      food: ['restaurant', 'cafe', 'mcdonalds', 'hungry jacks', 'kfc'],
+      entertainment: ['entertainment', 'cinema', 'eventbrite', 'ticketmaster'],
+      healthcare: ['health', 'pharmacy', 'chemist', 'doctor', 'hospital'],
+  };
+
+  for (const category in categories) {
+      if (categories[category].some(keyword => lowerDesc.includes(keyword))) {
+          return category;
+      }
+  }
+
+  return 'misc';
+}
+
 function filterSummaryRows(transactions: Transaction[]): Transaction[] {
   const excludePatterns = [
     /total/i,
@@ -117,10 +146,16 @@ function filterSummaryRows(transactions: Transaction[]): Transaction[] {
 }
 
 function categorizeTransactions(transactions: Transaction[]): Record<string, Transaction[]> {
-  return {
-    deposits: transactions.filter(t => t.type === 'credit'),
-    withdrawals: transactions.filter(t => t.type === 'debit'),
-  };
+  const grouped: Record<string, Transaction[]> = {};
+  
+  transactions.forEach(t => {
+    const category = t.category || 'misc';
+    if (!grouped[category]) {
+      grouped[category] = [];
+    }
+    grouped[category].push(t);
+  });
+  return grouped;
 }
 
 function groupByMonth(transactions: Transaction[]): Record<string, Transaction[]> {
@@ -166,4 +201,3 @@ function isDebit(description: string): boolean {
   const debitPatterns = /withdrawal|purchase|payment|debit|charge/i;
   return debitPatterns.test(description);
 }
-

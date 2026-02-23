@@ -53,7 +53,7 @@ This markdown is used throughout all projects, as rules and regulations to proje
 |-------|-----------|----------|--------|
 | PDF parser returns incorrect amounts | Parser regex fails on multi-line transactions or inconsistent table formatting | Updated extractTransaction() to parse ANZ statement format with DD MMM dates, multi-line descriptions, and withdrawal/deposit/balance columns; modified route to slice text from "Transaction Details" section | ✅ Implemented |
 | Missing transaction filtering | Page headers, footers, totals included in results | Added `filterSummaryRows()` to exclude summary patterns (TOTAL, BALANCE, etc) | ✅ Implemented |
-| Transaction categorization placeholder | No AI-based categorization yet | Basic category structure exists in `categorizeTransactions()` - ready for AI integration | ⏳ Pending |
+| Transaction categorization placeholder | No categorization logic | Added `getCategoryFromDescription` with keyword matching for common categories | ✅ Implemented |
 | Database not connected | Prisma client imported but routes don't use DB | Need to integrate DB storage in API route after schema finalized | ⏳ Blocked |
 | Category colors inconsistent | TransactionDisplay uses hardcoded category colors | Centralize category definitions in lib/constants | 🔄 In Progress |
 
@@ -71,7 +71,7 @@ This markdown is used throughout all projects, as rules and regulations to proje
 - ✅ Monthly grouping with month abbreviation conversion
 - ✅ Accuracy testing for ANZ format (numbers correct)
 - ⏳ Accuracy testing with other bank statement formats (pending edge cases)
-- ⏳ Transaction categorization logic (manual matching only, AI pending)
+- ✅ Transaction categorization logic (keyword matching implemented)
 - ⏳ Monthly grouping and summary calculations (partially tested)
 
 ### Feature Testing Status
@@ -80,7 +80,7 @@ This markdown is used throughout all projects, as rules and regulations to proje
 | File upload | ✅ | ✅ | ⏳ | Works for PDF files, rejects non-PDFs |
 | PDF text extraction | ✅ | ✅ | ⏳ | Uses pdf2json library |
 | Transaction parsing | ✅ | ✅ | ✅ | Validated with ANZ statement, numbers correct |
-| Transaction categorization | ⏳ | ⏳ | ⏳ | Basic structure only, needs AI |
+| Transaction categorization | ✅ | ✅ | ✅ | Keyword matching implemented |
 | Data visualization | ✅ | ⏳ | ⏳ | UI components built, data binding needs testing |
 | Monthly grouping | ✅ | ✅ | ✅ | Validated grouping by month |
 | Database persistence | ❌ | ❌ | ❌ | Not yet integrated |
@@ -140,6 +140,7 @@ When implementing features:
 6. **Transaction Filtering** - Remove page totals, headers, summary rows
 7. **ANZ Statement Parsing** - Updated parser for ANZ bank statements with DD MMM dates and column-based amounts
 8. **Text Slicing** - Modified route to start parsing from "Transaction Details" section
+9. **Transaction Categorization** - Implemented keyword-based categorization for groceries, transport, utilities, etc.
 
 ### In Progress
 - Category color centralization
@@ -166,4 +167,3 @@ Track mistakes across agent conversations to avoid regression:
 | Regex not matching bank-specific date formats | Parsing failed on ANZ DD MMM dates instead of expected DD/MM | Update regex and parsing logic to match actual date patterns in bank statements |
 
 ---
-

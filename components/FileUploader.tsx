@@ -136,7 +136,7 @@ export default function FileUpload({
         <div>
           <div className="h-40">
             <p className="font-medium my-2 mt-6 text-muted-foreground text-sm">
-              Files to upload
+              File loading
             </p>
             <div className="space-y-2 pr-3">
               {filesToUpload.map((fileUploadProgress) => {

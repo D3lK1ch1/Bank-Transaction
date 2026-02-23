@@ -43,15 +43,6 @@ export async function POST(req: NextRequest) {
 
           pdfParser.on("pdfParser_dataReady", () => {
               parsedText = (pdfParser as any).getRawTextContent();
-              console.log("Total characters:", parsedText.length);
-              console.log("First 500 chars:\n", parsedText.slice(0, 500));
-              console.log("Contains numbers:", /\d/.test(parsedText)); 
-              // Find the start of transaction details (second page)
-              const startIndex = parsedText.indexOf("Transaction Details");
-              if (startIndex !== -1) {
-                parsedText = parsedText.slice(startIndex);
-              }
-              console.log("Parsed text starts with:", parsedText.slice(0, 200));
               resolve();
           });
 
