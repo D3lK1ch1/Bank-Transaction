@@ -1,5 +1,5 @@
 # Bank Transaction App
-An app where people upload their bank PDF files, and shown their purchases listing the categories and the amount of money used.
+An app where people upload their bank PDF files (only ANZ), and shown their purchases listing the categories and the amount of money used.
 
 ## Features
 * Show the UI to upload only bank PDF statements (other PDF not accepted?)
@@ -27,6 +27,9 @@ An app where people upload their bank PDF files, and shown their purchases listi
 * Ensuring that the pdf parser reads  through the bank statement and extracted numbers, giving a monthly account of deposits and withdrawals that are color coded
 
 > What to work next: Layout, making it clearcut how much money is spent. Only focusing on monthly transactions, filtering out categories and giving a better visualization.
+
+## Potential Constraints
+* Only one bank PDF formatting accepted. Tried others and researched, unsure whether it is possible to universally parse all PDFs subtly from dates, withdrawals and deposits.
 
 
 
