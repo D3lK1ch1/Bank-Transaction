@@ -1,6 +1,32 @@
 'use client'
 
 import { Transaction } from "@/lib/transactionParser";
+import { useState } from "react";
+import { ChevronDown, ChevronRight } from "lucide-react";
+
+interface CollapsibleSectionProps {
+  title: string;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+}
+
+function CollapsibleSection({ title, children, defaultOpen = true }: CollapsibleSectionProps) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+
+  return (
+    <div className="bg-white rounded-lg shadow overflow-hidden">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition"
+      >
+        <h2 className="text-2xl font-bold">{title}</h2>
+        {isOpen ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
+      </button>
+      {isOpen && <div className="px-6 pb-6">{children}</div>}
+    </div>
+  );
+}
+
 interface TransactionDisplayProps {
   transactions: Transaction[];
   categorized: Record<string, Transaction[]>;
@@ -32,6 +58,7 @@ export default function TransactionDisplay({
     food: "bg-orange-100 text-orange-800",
     entertainment: "bg-indigo-100 text-indigo-800",
     healthcare: "bg-cyan-100 text-cyan-800",
+    friends: "bg-teal-100 text-teal-800",
     misc: "bg-gray-100 text-gray-800",
   };
 
@@ -40,112 +67,116 @@ export default function TransactionDisplay({
   };
 
   return (
-    <div className="space-y-8">
-      {/* Monthly Breakdown */}
-      {Object.keys(monthlyGrouped).length > 0 && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-2xl font-bold mb-4">Monthly Breakdown</h2>
-          <div className="space-y-3">
-            {Object.entries(monthlyGrouped)
-              .sort()
-              .map(([month, monthTransactions]) => {
-                const deposits = monthTransactions.reduce(
-                  (sum, t) => sum + getDeposit(t),
-                  0
-                );
-                const withdrawals = monthTransactions.reduce(
-                  (sum, t) => sum + getWithdrawal(t),
-                  0
-                );
-                const net = deposits - withdrawals;
+    <div className="space-y-4">
+      {/* Monthly & Category Breakdown Combined */}
+      <CollapsibleSection title="Monthly & Category Breakdown" defaultOpen={true}>
+        <div className="space-y-6">
+          {/* Monthly Breakdown */}
+          {Object.keys(monthlyGrouped).length > 0 && (
+            <div>
+              <h3 className="text-lg font-semibold mb-3">Monthly Breakdown</h3>
+              <div className="space-y-3">
+                {Object.entries(monthlyGrouped)
+                  .sort()
+                  .map(([month, monthTransactions]) => {
+                    const deposits = monthTransactions.reduce(
+                      (sum, t) => sum + getDeposit(t),
+                      0
+                    );
+                    const withdrawals = monthTransactions.reduce(
+                      (sum, t) => sum + getWithdrawal(t),
+                      0
+                    );
+                    const net = deposits - withdrawals;
 
-                return (
-                  <div
-                    key={month}
-                    className="p-4 border rounded-lg hover:bg-gray-50 transition"
-                  >
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <p className="font-semibold text-lg">{month}</p>
+                    return (
+                      <div
+                        key={month}
+                        className="p-4 border rounded-lg hover:bg-gray-50 transition"
+                      >
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <p className="font-semibold text-lg">{month}</p>
+                          </div>
+                          <div className="text-right space-y-1">
+                            <p className="text-green-600 font-semibold">
+                              Deposits : +${deposits.toFixed(2)}
+                            </p>
+                            <p className="text-red-600 font-semibold">
+                              Withdrawals: -${withdrawals.toFixed(2)}
+                            </p>
+                            <p
+                              className={`font-bold ${
+                                net >= 0 ? "text-green-600" : "text-red-600"
+                              }`}
+                            >
+                              Balance: {net >= 0 ? "+" : ""}${net.toFixed(2)}
+                            </p>
+                          </div>
+                        </div>
                       </div>
-                      <div className="text-right space-y-1">
-                        <p className="text-green-600 font-semibold">
-                          Deposits : +${deposits.toFixed(2)}
-                        </p>
-                        <p className="text-red-600 font-semibold">
-                          Withdrawals: -${withdrawals.toFixed(2)}
-                        </p>
+                    );
+                  })}
+              </div>
+            </div>
+          )}
+
+          {/* Category Breakdown */}
+          {Object.keys(categorized).length > 0 && (
+            <div>
+              <h3 className="text-lg font-semibold mb-3">Category Breakdown</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {Object.entries(categorized)
+                  .sort(([, a], [, b]) => {
+                    const totalA = a.reduce((sum, t) => sum + Math.abs(getSignedAmount(t)), 0);
+                    const totalB = b.reduce((sum, t) => sum + Math.abs(getSignedAmount(t)), 0);
+                    return totalB - totalA;
+                  })
+                  .map(([category, categoryTransactions]) => {
+                    const total = categoryTransactions.reduce(
+                      (sum, t) => sum + getSignedAmount(t),
+                      0
+                    );
+                    const totalAbsolute = categoryTransactions.reduce(
+                      (sum, t) => sum + Math.abs(getSignedAmount(t)),
+                      0
+                    );
+
+                    return (
+                      <div
+                        key={category}
+                        className={`p-4 rounded-lg border-2 ${getCategoryColor(
+                          category
+                        )}`}
+                      >
+                        <div className="flex justify-between items-center mb-2">
+                          <p className="font-semibold capitalize">{category}</p>
+                          <span className="text-xs font-medium">
+                            {categoryTransactions.length} items
+                          </span>
+                        </div>
                         <p
-                          className={`font-bold ${
-                            net >= 0 ? "text-green-600" : "text-red-600"
+                          className={`text-2xl font-bold ${
+                            total >= 0 ? "text-green-600" : "text-red-600"
                           }`}
                         >
-                          Balance: {net >= 0 ? "+" : ""}${net.toFixed(2)}
+                          {total >= 0 ? "+" : ""}${total.toFixed(2)}
+                        </p>
+                        <p className="text-xs text-gray-600 mt-1">
+                          Total spending: ${totalAbsolute.toFixed(2)}
                         </p>
                       </div>
-                    </div>
-                  </div>
-                );
-              })}
-          </div>
+                    );
+                  })}
+              </div>
+            </div>
+          )}
         </div>
-      )}
+      </CollapsibleSection>
 
-      {/* Category Breakdown */}
-      {Object.keys(categorized).length > 0 && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-2xl font-bold mb-4">Category Breakdown</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {Object.entries(categorized)
-              .sort(([, a], [, b]) => {
-                const totalA = a.reduce((sum, t) => sum + Math.abs(getSignedAmount(t)), 0);
-                const totalB = b.reduce((sum, t) => sum + Math.abs(getSignedAmount(t)), 0);
-                return totalB - totalA;
-              })
-              .map(([category, categoryTransactions]) => {
-                const total = categoryTransactions.reduce(
-                  (sum, t) => sum + getSignedAmount(t),
-                  0
-                );
-                const totalAbsolute = categoryTransactions.reduce(
-                  (sum, t) => sum + Math.abs(getSignedAmount(t)),
-                  0
-                );
-
-                return (
-                  <div
-                    key={category}
-                    className={`p-4 rounded-lg border-2 ${getCategoryColor(
-                      category
-                    )}`}
-                  >
-                    <div className="flex justify-between items-center mb-2">
-                      <p className="font-semibold capitalize">{category}</p>
-                      <span className="text-xs font-medium">
-                        {categoryTransactions.length} items
-                      </span>
-                    </div>
-                    <p
-                      className={`text-2xl font-bold ${
-                        total >= 0 ? "text-green-600" : "text-red-600"
-                      }`}
-                    >
-                      {total >= 0 ? "+" : ""}${total.toFixed(2)}
-                    </p>
-                    <p className="text-xs text-gray-600 mt-1">
-                      Total spending: ${totalAbsolute.toFixed(2)}
-                    </p>
-                  </div>
-                );
-              })}
-          </div>
-        </div>
-      )}
-
-      {/* Transactions List */}
-      {transactions.length > 0 && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-2xl font-bold mb-4">All Transactions</h2>
+      {/* All Transactions */}
+      <CollapsibleSection title="All Transactions" defaultOpen={true}>
+        {transactions.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-gray-50 border-b">
@@ -199,16 +230,14 @@ export default function TransactionDisplay({
               </tbody>
             </table>
           </div>
-        </div>
-      )}
-
-      {transactions.length === 0 && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
-          <p className="text-yellow-800">
-            No transactions found. Check if the PDF format is supported.
-          </p>
-        </div>
-      )}
+        ) : (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
+            <p className="text-yellow-800">
+              No transactions found. Check if the PDF format is supported.
+            </p>
+          </div>
+        )}
+      </CollapsibleSection>
     </div>
   );
 }
