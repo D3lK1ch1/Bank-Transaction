@@ -29,6 +29,8 @@ function findTransactionHeader(lines: string[]): HeaderInfo {
     /date.*transaction.*withdrawal.*deposit/i,
     /date.*transaction.*detail.*withdrawal.*deposit/i,
     /date.*description.*withdrawal.*deposit/i,
+    /date.*transaction.*description.*amount/i,
+    /date.*transaction.*amount/i,
   ];
   
   let headerIndex = -1;
@@ -55,16 +57,17 @@ function findTransactionHeader(lines: string[]): HeaderInfo {
   }
   
   const startIndex = headerIndex >= 0 ? headerIndex + 1 : 0;
-  const sampleLines = lines.slice(startIndex, startIndex + 5);
+  const sampleLines = lines.slice(startIndex, startIndex + 50);
   
   let format: FormatType = 'unknown';
   const hasBalance = /balance/i.test(headerLine);
   const hasWithdrawals = /withdrawal/i.test(headerLine);
   const hasDeposits = /deposit/i.test(headerLine);
+  const hasAmount = /amount/i.test(headerLine);
   
   if (hasBalance && hasWithdrawals && hasDeposits) {
     format = 'column';
-  } else if (hasWithdrawals && hasDeposits && !hasBalance) {
+  } else if ((hasWithdrawals && hasDeposits && !hasBalance) || (hasAmount && !hasBalance)) {
     format = 'line';
   }
   
@@ -176,24 +179,60 @@ function extractTransaction(
       return { parsed: false, transaction: {} as Transaction, nextIndex };
     }
   } else {
-    // Column format: last 3 tokens = withdrawal, deposit, balance
-    const amounts = parts.slice(-3);
-    const withdrawalStr = amounts[0];
-    const depositStr = amounts[1];
-    const balanceStr = amounts[2];
-    description = parts.slice(2, -3).join(' ');
+    // Column format: extract amounts from the line using regex to preserve position
+    const amountRegex = /(\d[\d,]*(?:\.\d{1,2})?)/g;
+    const matches = fullLine.match(amountRegex) || [];
     
-    if (withdrawalStr && withdrawalStr !== 'blank' && !isNaN(parseFloat(withdrawalStr.replace(/,/g, '')))) {
-      amount = parseFloat(withdrawalStr.replace(/,/g, ''));
-      type = 'debit';
-    } else if (depositStr && depositStr !== 'blank' && !isNaN(parseFloat(depositStr.replace(/,/g, '')))) {
-      amount = parseFloat(depositStr.replace(/,/g, ''));
-      type = 'credit';
-    } else {
+    // Remove the date number (first token if it's just a day)
+    const dayNum = parseInt(parts[0]);
+    const numericTokens = matches.filter(m => {
+      const val = parseFloat(m.replace(/,/g, ''));
+      return val >= 0 && val !== dayNum;
+    });
+    
+    if (numericTokens.length < 2) {
       return { parsed: false, transaction: {} as Transaction, nextIndex };
     }
     
-    balance = balanceStr && balanceStr !== 'blank' ? parseFloat(balanceStr.replace(/,/g, '')) : undefined;
+    // Description is between date and first amount
+    const firstAmountMatch = fullLine.indexOf(numericTokens[0]);
+    description = fullLine.substring(0, firstAmountMatch).replace(/^\d+\s+\w+\s+/, '').trim();
+    
+    const parseNum = (s: string) => parseFloat(s.replace(/,/g, ''));
+    
+    let withdrawalAmt = NaN;
+    let depositAmt = NaN;
+    let balanceAmt = NaN;
+    
+    if (numericTokens.length === 2) {
+      const num0 = parseNum(numericTokens[0]);
+      const num1 = parseNum(numericTokens[1]);
+      // Larger value is typically balance (cumulative)
+      if (num1 > num0 * 3) {
+        balanceAmt = num1;
+        withdrawalAmt = num0;
+      } else {
+        withdrawalAmt = num0;
+        balanceAmt = num1;
+      }
+    } else if (numericTokens.length >= 3) {
+      // Take the last 3 amounts
+      withdrawalAmt = parseNum(numericTokens[numericTokens.length - 3]);
+      depositAmt = parseNum(numericTokens[numericTokens.length - 2]);
+      balanceAmt = parseNum(numericTokens[numericTokens.length - 1]);
+    }
+    
+    if (!isNaN(withdrawalAmt) && withdrawalAmt > 0) {
+      amount = withdrawalAmt;
+      type = 'debit';
+      if (!isNaN(balanceAmt)) balance = balanceAmt;
+    } else if (!isNaN(depositAmt) && depositAmt > 0) {
+      amount = depositAmt;
+      type = 'credit';
+      if (!isNaN(balanceAmt)) balance = balanceAmt;
+    } else {
+      return { parsed: false, transaction: {} as Transaction, nextIndex };
+    }
   }
   
   return {
@@ -209,10 +248,10 @@ function extractTransaction(
   };
 }
 
-function getCategoryFromDescription(description: string): string {
+export function getCategoryFromDescription(description: string): string {
   const lowerDesc = description.toLowerCase();
   const categories: Record<string, string[]> = {
-      groceries: ['coles', 'woolworths', 'iga', 'supermarket'],
+      groceries: ['coles', 'woolworths', 'woolies', 'iga', 'supermarket'],
       transport: ['ptv', 'uber', 'didi', 'ola', 'taxi', 'public transport'],
       utilities: ['energy', 'water', 'gas', 'internet', 'telstra', 'optus', 'vodafone', 'electricity'],
       rent: ['rent', 'real estate'],
