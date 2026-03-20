@@ -85,7 +85,7 @@ export default function FileUpload({
       }
 
       const file = acceptedFiles[0];
-      if (file.size > maxSize) {
+      if (!file || file.size === undefined || file.size > maxSize) {
         setErrorMsg("File too large. Max 8MB.");
         return;
       }
@@ -109,6 +109,7 @@ export default function FileUpload({
       <div>
         <label
           {...getRootProps()}
+          htmlFor="dropzone-file"
           className="relative flex flex-col items-center justify-center w-full py-6 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100"
         >
           <div className="text-center">
