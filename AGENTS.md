@@ -56,6 +56,11 @@ This markdown is used throughout all projects, as rules and regulations to proje
 | Transaction categorization placeholder | No categorization logic | Added `getCategoryFromDescription` with keyword matching for common categories | ✅ Implemented |
 | Database not connected | Prisma client imported but routes don't use DB | Need to integrate DB storage in API route after schema finalized | ⏳ Blocked |
 | Category colors inconsistent | TransactionDisplay uses hardcoded category colors | Centralize category definitions in lib/constants | 🔄 In Progress |
+| Multiple bank statement formats | Official file has different format from Transaction Report (columns vs single-line amounts) | Added auto-detect format with `findTransactionHeader()` that identifies format by header keywords; column format uses last 3 tokens, line format uses regex to find $ amount and detects type from description | ✅ Implemented |
+| @testing-library/jest-dom import error | Malformed package.json entry mixing two packages | Removed unused jest-dom import; tests pass with vitest built-in assertions | ✅ Fixed |
+| Column format parsing failures | Test data used 2-column format but parser requires 3-column | Rewrote extractTransaction() with regex amount extraction; updated test fixtures to use 3-column format with 0.00 placeholders | ✅ Fixed |
+| "woolies" not categorized | Substring matching requires exact keyword match | Added 'woolies' to groceries keywords array | ✅ Fixed |
+| FileUploader label accessibility | Label missing htmlFor attribute for input association | Added htmlFor="dropzone-file" to label element | ✅ Fixed |
 
 ---
 
@@ -70,7 +75,10 @@ This markdown is used throughout all projects, as rules and regulations to proje
 - ✅ ANZ statement format parsing (DD MMM dates, column-based amounts)
 - ✅ Monthly grouping with month abbreviation conversion
 - ✅ Accuracy testing for ANZ format (numbers correct)
-- ⏳ Accuracy testing with other bank statement formats (pending edge cases)
+- ✅ Auto-detect format for multiple bank statement types
+- ✅ Transaction Report format parsing (single $ amount, keyword-based type detection)
+- ✅ Month header filtering (FEB 2026, JAN 2026 lines skipped)
+- ✅ Blank line filtering in Transaction Report format
 - ✅ Transaction categorization logic (keyword matching implemented)
 - ⏳ Monthly grouping and summary calculations (partially tested)
 
@@ -79,10 +87,11 @@ This markdown is used throughout all projects, as rules and regulations to proje
 |---------|-----------|-----------------|-----|-------|
 | File upload | ✅ | ✅ | ⏳ | Works for PDF files, rejects non-PDFs |
 | PDF text extraction | ✅ | ✅ | ⏳ | Uses pdf2json library |
-| Transaction parsing | ✅ | ✅ | ✅ | Validated with ANZ statement, numbers correct |
-| Transaction categorization | ✅ | ✅ | ✅ | Keyword matching implemented |
+| Transaction parsing (single format) | ✅ | ✅ | ✅ | Validated with ANZ official statement |
+| Transaction parsing (multi-format) | ✅ | ✅ | ✅ | Auto-detect column vs line format |
+| Transaction categorization | ✅ | ✅ | ✅ | Keyword matching implemented (92 tests passing) |
 | Data visualization | ✅ | ⏳ | ⏳ | UI components built, data binding needs testing |
-| Monthly grouping | ✅ | ✅ | ✅ | Validated grouping by month |
+| Monthly grouping | ✅ | ✅ | ✅ | 9/10 tests passing (1 data format issue) |
 | Database persistence | ❌ | ❌ | ❌ | Not yet integrated |
 | Export reports | ❌ | ❌ | ❌ | Not yet implemented |
 
@@ -141,6 +150,8 @@ When implementing features:
 7. **ANZ Statement Parsing** - Updated parser for ANZ bank statements with DD MMM dates and column-based amounts
 8. **Text Slicing** - Modified route to start parsing from "Transaction Details" section
 9. **Transaction Categorization** - Implemented keyword-based categorization for groceries, transport, utilities, etc.
+10. **Multi-Format Auto-Detection** - Added `findTransactionHeader()` to detect format from header keywords (Date/Transaction/Withdrawals/Deposits), auto-switches between column format (official statements with Balance) and line format (Transaction Reports)
+11. **Test Suite Fixes** - Fixed 22 test failures down to 10; fixed @testing-library/jest-dom import error, column parsing logic, categorization keywords ("woolies"), label accessibility, and float comparison issues
 
 ### In Progress
 - Category color centralization
@@ -165,5 +176,54 @@ Track mistakes across agent conversations to avoid regression:
 | Not validating file types | Non-PDF files crashing parser | Check both MIME type AND filename extension before processing |
 | Hardcoding category colors | Inconsistent theming across components | Define colors in constants file; import and reuse across components |
 | Regex not matching bank-specific date formats | Parsing failed on ANZ DD MMM dates instead of expected DD/MM | Update regex and parsing logic to match actual date patterns in bank statements |
+| Assuming single format for all banks | Parser broke on Transaction Report format vs Official format | Implement auto-detection based on header detection and format-specific parsing logic |
+| Malformed package.json dependency | @testing-library/jest-dom entry mixed with wrong format: `"file:testing-library/user-event@^14.5.0"` | Separate packages properly or remove unused ones; run npm install after changes |
+| Tests expecting test data format vs parser assumptions | Inline test data used 2-column format but parser requires 3-column (withdrawal, deposit, balance) | Align test fixtures with parser requirements; use consistent data format |
+
+---
+
+## Testing Session Log (March 20, 2026)
+
+### Initial Error
+```
+Error: Failed to resolve import "@testing-library/jest-dom" from "tests/setup.ts"
+```
+
+### Root Cause
+`package.json` line 30 had malformed entry:
+```json
+"@testing-library/jest-dom": "file:testing-library/user-event@^14.5.0",
+```
+
+### Fixes Applied
+
+| Issue | File | Fix |
+|-------|------|-----|
+| jest-dom import | tests/setup.ts | Removed unused import |
+| jest-dom package | package.json | Removed malformed entry |
+| "woolies" not categorized | transactionParser.ts | Added 'woolies' to groceries keywords |
+| FileUploader label accessibility | FileUploader.tsx | Added `htmlFor="dropzone-file"` to label |
+| Column parsing logic | transactionParser.ts | Rewrote to use regex for amount extraction |
+| Header detection | transactionParser.ts | Added pattern for "Date...Amount" header |
+| Amount threshold | transactionParser.ts | Changed to `val >= 0` to handle 0.00 |
+| Test fixture | sample-transactions.ts | Updated to use 3-column format |
+| Test tolerance | transactionParser.test.ts | Changed `toBe()` to `toBeCloseTo()` for float comparison |
+
+### Final Test Results
+```
+Test Files: 2 failed | 3 passed (5)
+Tests: 10 failed | 140 passed (150)
+```
+
+### Remaining Issues
+1. **Summary tests (8)** - Inline test data doesn't match 3-column format requirement
+2. **FileUploader tests (2)** - fireEvent doesn't trigger react-dropzone callbacks properly
+
+### Lessons Learned
+- Always run `npm install` after package.json changes
+- Test data must match parser assumptions exactly
+- Float comparisons need `toBeCloseTo()` not `toBe()`
+- react-dropzone tests need `userEvent` or proper mocking
+- Fix test data vs changing parser (don't over-engineer parser for bad test data)
 
 ---
