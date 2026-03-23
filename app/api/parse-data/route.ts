@@ -53,7 +53,6 @@ export async function POST(req: NextRequest) {
         const parsedData = parseTransactions(parsedText);
 
         const response = new NextResponse(JSON.stringify({
-          rawText: parsedText,
           transactions: parsedData.transactions,
           categorized: parsedData.categorized,
           monthlyGrouped: parsedData.monthlyGrouped,
