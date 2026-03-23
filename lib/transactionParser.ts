@@ -1,4 +1,5 @@
 import type { Transaction, ParsedData, Summary } from './types';
+import { getCategoryFromDescription } from './categories';
 
 export type { Transaction, ParsedData } from './types';
 
@@ -234,30 +235,6 @@ function extractTransaction(
     },
     nextIndex,
   };
-}
-
-export function getCategoryFromDescription(description: string): string {
-  const lowerDesc = description.toLowerCase();
-  const categories: Record<string, string[]> = {
-      groceries: ['coles', 'woolworths', 'woolies', 'iga', 'supermarket'],
-      transport: ['ptv', 'uber', 'didi', 'ola', 'taxi', 'public transport'],
-      utilities: ['energy', 'water', 'gas', 'internet', 'telstra', 'optus', 'vodafone', 'electricity'],
-      rent: ['rent', 'real estate'],
-      education: ['university', 'tafe', 'school', 'education'],
-      shopping: ['kmart', 'target', 'big w', 'shopping', 'myer', 'david jones'],
-      food: ['restaurant', 'cafe', 'mcdonalds', 'hungry jacks', 'kfc', 'snack bar', 'food', 'pizza', 'burger', 'sushi', 'noodle', 'bakery', 'coffee', 'tea', 'drink', 'ice cream', 'dessert', 'lunch', 'dinner', 'breakfast'],
-      entertainment: ['entertainment', 'cinema', 'eventbrite', 'ticketmaster', 'netflix', 'spotify'],
-      healthcare: ['health', 'pharmacy', 'chemist', 'doctor', 'hospital'],
-      friends: ['friends', 'mobile banking payment', 'transfer to', 'transfer from', 'pay anyone', 'osko', 'pay id'],
-  };
-
-  for (const category in categories) {
-      if (categories[category].some(keyword => lowerDesc.includes(keyword))) {
-          return category;
-      }
-  }
-
-  return 'misc';
 }
 
 function filterSummaryRows(transactions: Transaction[]): Transaction[] {

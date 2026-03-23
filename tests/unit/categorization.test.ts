@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getCategoryFromDescription } from '@/lib/transactionParser';
+import { getCategoryFromDescription } from '@/lib/categories';
 import { categorizationTestCases } from '../fixtures/sample-transactions';
 
 describe('Categorization', () => {
