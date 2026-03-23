@@ -1,6 +1,13 @@
 # Bank Transaction App
 An app where people upload their bank PDF files (only ANZ), and shown their purchases listing the categories and the amount of money used.
 
+## Getting Started
+After forking / cloning to run the build with npm:
+npm run build
+
+And then: 
+npm start
+
 ## Features
 * Show the UI to upload only bank PDF statements (other PDF not accepted?)
 * Parsing bank PDFs about their transactions, focusing on description, withdrawal and deposit calculating amount in red (negative for withdrawal) and deposit in green (positive for deposit)
@@ -20,16 +27,20 @@ An app where people upload their bank PDF files (only ANZ), and shown their purc
 * PDF uploaded, with extracted text matching with the PDF itself (Works, referenced from another GitHub PDF Parser)
 * Extracted text can be parsed, specifically description, withdrawal and deposit (Works, exactly with the numbers according to the PDF statement)
 * Amount will be calculated depending on withdrawal and deposit, in positive (green) or negative (red) (See test above)
+* Actual ATTD-based tests made
 
 ## Current Progress
 * PDF upload worked, now trying to parse through PDF bank statements. Results: Between looking through any numbers in the statement and giving an astronomical amount or not noticing any numbers within the table due to single/multi-line transactions etc
 
-* Ensuring that the pdf parser reads  through the bank statement and extracted numbers, giving a monthly account of deposits and withdrawals that are color coded
+* Ensuring that the pdf parser reads  through the bank statement and extracted numbers, giving a monthly account of deposits and withdrawals that are color coded (Somewhat done)
+
+* Reminded to add tests based on ATTD, passing 140 / 150  tests to fix known issues later.
+
+* Taking good prompting for archiectual problems with unused code, security vulnerabilities and maintanability problems. Needing code review, actually reading the code, linting for design and 'is it well-structured' alongside 'does it work'. Review structure before adding more features, pause and think about design. Caring about layers and types for coupling and duplication next time
 
 > What to work next: Layout, making it clearcut how much money is spent. Only focusing on monthly transactions, filtering out categories and giving a better visualization.
 
-## Potential Constraints
-* Only one bank PDF formatting accepted. Tried others and researched, unsure whether it is possible to universally parse all PDFs subtly from dates, withdrawals and deposits.
+
 
 
 
