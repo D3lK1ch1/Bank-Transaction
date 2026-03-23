@@ -3,19 +3,7 @@
 import React, { useState } from "react";
 import FileUpload from "@/components/FileUploader"
 import TransactionDisplay from "@/components/TransactionDisplay"
-import type { Transaction } from "@/lib/transactionParser";
-
-interface ParsedData {
-  rawText: string;
-  transactions: Transaction[];
-  categorized: Record<string, Transaction[]>;
-  monthlyGrouped: Record<string, Transaction[]>;
-  summary: {
-    totalDeposits: number;
-    totalWithdrawals: number;
-    netAmount: number;
-  };
-}
+import type {ParsedData } from "@/lib/types";
 
 const PDFParser = () => {
   

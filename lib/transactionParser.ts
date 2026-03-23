@@ -1,18 +1,6 @@
-export interface Transaction {
-  date: string;
-  description: string;
-  amount: number;
-  type: 'debit' | 'credit';
-  balance?: number;
-  category?: string;
-}
+import type { Transaction, ParsedData, Summary } from './types';
 
-interface ParsedData {
-  transactions: Transaction[];
-  categorized: Record<string, Transaction[]>;
-  monthlyGrouped: Record<string, Transaction[]>;
-  summary: Record<string, any>;
-}
+export type { Transaction, ParsedData } from './types';
 
 type FormatType = 'column' | 'line' | 'unknown';
 
@@ -322,7 +310,7 @@ function getMonthNumber(monthStr: string): number {
   return months[monthStr.toUpperCase() as keyof typeof months] || 1;
 }
 
-function generateSummary(transactions: Transaction[]): Record<string, any> {
+function generateSummary(transactions: Transaction[]): Summary {
   const totalDebit = transactions
     .filter(t => t.type === 'debit')
     .reduce((sum, t) => sum + t.amount, 0);
@@ -337,9 +325,4 @@ function generateSummary(transactions: Transaction[]): Record<string, any> {
     totalWithdrawals: parseFloat(totalDebit.toFixed(2)),
     netAmount: parseFloat((totalCredit - totalDebit).toFixed(2)),
   };
-}
-
-function isDebit(description: string): boolean {
-  const debitPatterns = /withdrawal|purchase|payment|debit|charge/i;
-  return debitPatterns.test(description);
 }

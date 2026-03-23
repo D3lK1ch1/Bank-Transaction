@@ -1,6 +1,6 @@
 'use client'
 
-import { Transaction } from "@/lib/transactionParser";
+import type { Transaction } from "@/lib/types";
 import { useState } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 
