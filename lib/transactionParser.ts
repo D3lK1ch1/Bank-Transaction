@@ -306,7 +306,7 @@ function groupByMonth(transactions: Transaction[]): Record<string, Transaction[]
   transactions.forEach(t => {
     const [, monthStr] = t.date.split(/\s+/);
     const monthNum = getMonthNumber(monthStr);
-    const key = `2025-${monthNum.toString().padStart(2, '0')}`;
+    const key = `${new Date().getFullYear()}-${monthNum.toString().padStart(2, '0')}`;
     if (!grouped[key]) grouped[key] = [];
     grouped[key].push(t);
   });
