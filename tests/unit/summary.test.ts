@@ -8,10 +8,10 @@ describe('Summary Calculations', () => {
       const text = `
         Date Transaction Detail             Withdrawal  Deposit  Balance
         -----------------------------------------------------------------
-         1 Jan Transaction 1                100.00        1000.00
-         2 Jan Transaction 2                200.00         800.00
-         3 Jan Transaction 3                300.00         500.00
-      `;
+         1 Jan Transaction 1                100.00    0.00    1000.00
+         2 Jan Transaction 2                200.00     0.00     800.00
+         3 Jan Transaction 3                300.00     0.00     500.00
+       `;
       
       const result = parseTransactions(text);
       
@@ -22,10 +22,10 @@ describe('Summary Calculations', () => {
       const text = `
         Date Transaction Detail             Withdrawal  Deposit  Balance
         -----------------------------------------------------------------
-         1 Jan Deposit 1                                  1000.00  1000.00
-         2 Jan Deposit 2                                  2000.00  3000.00
-         3 Jan Deposit 3                                  500.00   3500.00
-      `;
+         1 Jan Deposit 1                    0.00    1000.00  1000.00
+         2 Jan Deposit 2                    0.00    2000.00  3000.00
+         3 Jan Deposit 3                    0.00     500.00   3500.00
+       `;
       
       const result = parseTransactions(text);
       
@@ -36,10 +36,10 @@ describe('Summary Calculations', () => {
       const text = `
         Date Transaction Detail             Withdrawal  Deposit  Balance
         -----------------------------------------------------------------
-         1 Jan Purchase 1                100.00          5000.00
-         2 Jan Purchase 2                250.00          4750.00
-         3 Jan Purchase 3                 50.00          4700.00
-      `;
+         1 Jan Purchase 1                100.00    0.00    5000.00
+         2 Jan Purchase 2                250.00    0.00    4750.00
+         3 Jan Purchase 3                 50.00     0.00    4700.00
+       `;
       
       const result = parseTransactions(text);
       
@@ -50,11 +50,11 @@ describe('Summary Calculations', () => {
       const text = `
         Date Transaction Detail             Withdrawal  Deposit  Balance
         -----------------------------------------------------------------
-         1 Jan Salary                                   3500.00  3500.00
-         2 Jan Rent Payment             1200.00         2300.00
-         3 Jan Groceries              156.23           2143.77
-         4 Jan Transfer In                         500.00   2643.77
-      `;
+         1 Jan Salary                   0.00    3500.00  3500.00
+         2 Jan Rent Payment           1200.00    0.00    2300.00
+         3 Jan Groceries              156.23     0.00    2143.77
+         4 Jan Transfer In             0.00    500.00   2643.77
+       `;
       
       const result = parseTransactions(text);
       
@@ -66,13 +66,13 @@ describe('Summary Calculations', () => {
       const text = `
         Date Transaction Detail             Withdrawal  Deposit  Balance
         -----------------------------------------------------------------
-         1 Jan Salary                                   3500.00  3500.00
-         2 Jan Rent Payment             1200.00         2300.00
-         3 Jan Groceries              156.23           2143.77
-         4 Jan Transport                50.00          2093.77
-         5 Jan Freelance                             800.00   2893.77
-         6 Jan Entertainment           120.00          2773.77
-      `;
+         1 Jan Salary                   0.00    3500.00  3500.00
+         2 Jan Rent Payment           1200.00    0.00    2300.00
+         3 Jan Groceries              156.23     0.00    2143.77
+         4 Jan Transport                50.00    0.00    2093.77
+         5 Jan Freelance             0.00     800.00   2893.77
+         6 Jan Entertainment           120.00    0.00    2773.77
+       `;
       
       const result = parseTransactions(text);
       
@@ -88,7 +88,7 @@ describe('Summary Calculations', () => {
       it(`should pass test case ${index + 1}`, () => {
         const text = `
           Date Transaction Detail             Withdrawal  Deposit  Balance
-          ${transactions.map(t => ` 1 Jan ${t.description} ${t.type === 'debit' ? t.amount : ''} ${t.type === 'credit' ? t.amount : ''} 10000`).join('\n')}
+          ${transactions.map(t => ` 1 Jan ${t.description} ${t.type === 'debit' ? `${t.amount} 0.00` : `0.00 ${t.amount}`} 10000`).join('\n')}
         `;
         
         const result = parseTransactions(text);
@@ -119,9 +119,9 @@ describe('Summary Calculations', () => {
       const text = `
         Date Transaction Detail             Withdrawal  Deposit  Balance
         -----------------------------------------------------------------
-         1 Jan Deposit 1                                  1000.00  1000.00
-         2 Jan Deposit 2                                  2000.00  3000.00
-      `;
+         1 Jan Deposit 1                    0.00    1000.00  1000.00
+         2 Jan Deposit 2                    0.00    2000.00  3000.00
+       `;
       
       const result = parseTransactions(text);
       
@@ -134,9 +134,9 @@ describe('Summary Calculations', () => {
       const text = `
         Date Transaction Detail             Withdrawal  Deposit  Balance
         -----------------------------------------------------------------
-         1 Jan Purchase 1                100.00          1000.00
-         2 Jan Purchase 2                200.00           800.00
-      `;
+         1 Jan Purchase 1                100.00    0.00    1000.00
+         2 Jan Purchase 2                200.00    0.00     800.00
+       `;
       
       const result = parseTransactions(text);
       
@@ -149,10 +149,10 @@ describe('Summary Calculations', () => {
       const text = `
         Date Transaction Detail             Withdrawal  Deposit  Balance
         -----------------------------------------------------------------
-         1 Jan Deposit 1                                  1234.56  1234.56
-         2 Jan Purchase 1                 99.99          1134.57
-         3 Jan Purchase 2                  0.01          1134.56
-      `;
+         1 Jan Deposit 1                    0.00    1234.56  1234.56
+         2 Jan Purchase 1                 99.99     0.00    1134.57
+         3 Jan Purchase 2                  0.01     0.00    1134.56
+       `;
       
       const result = parseTransactions(text);
       
@@ -164,9 +164,9 @@ describe('Summary Calculations', () => {
       const text = `
         Date Transaction Detail             Withdrawal  Deposit  Balance
         -----------------------------------------------------------------
-         1 Jan Big Deposit                             1000000.00  1000000.00
-         2 Jan Big Purchase            500000.00         500000.00
-      `;
+         1 Jan Big Deposit               0.00  1000000.00  1000000.00
+         2 Jan Big Purchase          500000.00    0.00    500000.00
+       `;
       
       const result = parseTransactions(text);
       
@@ -181,8 +181,8 @@ describe('Summary Calculations', () => {
       const text = `
         Date Transaction Detail             Withdrawal  Deposit  Balance
         -----------------------------------------------------------------
-         1 Jan Transaction                 100.00        1000.00
-      `;
+         1 Jan Transaction                 100.00    0.00    1000.00
+       `;
       
       const result = parseTransactions(text);
       
@@ -196,8 +196,8 @@ describe('Summary Calculations', () => {
       const text = `
         Date Transaction Detail             Withdrawal  Deposit  Balance
         -----------------------------------------------------------------
-         1 Jan Transaction                 100.00        1000.00
-      `;
+         1 Jan Transaction                 100.00    0.00    1000.00
+       `;
       
       const result = parseTransactions(text);
       

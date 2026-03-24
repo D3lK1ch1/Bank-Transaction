@@ -142,7 +142,11 @@ export const monthlyGroupingTestData: { transactions: Transaction[]; expectedMon
       { date: '15 Feb', description: 'Transaction 4', amount: 400, type: 'credit' },
       { date: '1 Mar', description: 'Transaction 5', amount: 500, type: 'debit' },
     ],
-    expectedMonths: ['2025-01', '2025-02', '2025-03'],
-    expectedCounts: { '2025-01': 2, '2025-02': 2, '2025-03': 1 },
+    expectedMonths: [`${new Date().getFullYear()}-01`, `${new Date().getFullYear()}-02`, `${new Date().getFullYear()}-03`],
+    expectedCounts: {
+      [`${new Date().getFullYear()}-01`]: 2,
+      [`${new Date().getFullYear()}-02`]: 2,
+      [`${new Date().getFullYear()}-03`]: 1
+    },
   },
 ];
