@@ -23,6 +23,7 @@ export async function POST(req: NextRequest) {
       }
 
       // Validate size
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       if (typeof (uploadedFile as any).size === 'number' && (uploadedFile as any).size > MAX_SIZE) {
         return new NextResponse(JSON.stringify({ error: "File too large. Maximum size is 8MB." }), { status: 413 });
       }
@@ -33,16 +34,18 @@ export async function POST(req: NextRequest) {
 
       try {
         await fs.writeFile(tempFilePath, fileBuffer);
-        const pdfParser = new (PDFParser as any)(null, 1);
+        const pdfParser = new (PDFParser as unknown as new (options?: unknown) => PDFParser)(null);
 
         await new Promise<void>((resolve, reject) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           pdfParser.on("pdfParser_dataError", (errData: any) =>
           {console.log(errData.parserError);
           reject(errData.parserError);}
         );
 
           pdfParser.on("pdfParser_dataReady", () => {
-              parsedText = (pdfParser as any).getRawTextContent();
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          parsedText = (pdfParser as any).getRawTextContent();
               resolve();
           });
 
@@ -68,7 +71,7 @@ export async function POST(req: NextRequest) {
         // Attempt to clean up temp file
         try {
           await fs.unlink(tempFilePath);
-        } catch (e) {
+        } catch {
           // ignore cleanup errors
         }
       }
