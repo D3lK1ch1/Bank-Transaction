@@ -25,14 +25,41 @@ export const CATEGORY_COLORS: Record<string, string> = {
   misc: 'bg-gray-100 text-gray-800',
 };
 
+const ANZ_PREFIXES = /^(EFTPOS|VISA DEBIT PURCHASE CARD \d+|VISA PURCHASE CARD \d+|MASTERCARD PURCHASE|BPAY|DIRECT DEBIT|PAYMENT TO)\s+/i;
+const BUSINESS_NOISE = /\s*(PTY\.?\s*LTD\.?\s+\w+|\bPT\\[A-Z]+|LTD\.?|INC\.?|P\/L)\s*/gi;
+const STATE_COUNTRY_SUFFIX = /\s+(VIC|NSW|QLD|SA|WA|TAS|ACT|NT)\s*(AU|AUS)?\s*$/i;
+const REPEATED_SUBURB_SUFFIX = /\s+(\w+)\s+\1\s+(VIC|NSW|QLD|SA|WA|TAS|ACT|NT)?\s*(AU|AUS)\s*$/i;
+
+
+export function extractMerchant(raw: string): string {
+  if (/TFER|FUNDS TFER|M-BANKING|PAY ANYONE|OSKO|PAY ID/i.test(raw)) return 'transfer';
+  if (/RNT\s/i.test(raw)) return 'rent';
+  if (/TICK\s|TICKET/i.test(raw)) return 'ticket';
+
+  const merchant = raw
+    .replace(ANZ_PREFIXES, '')
+    .replace(BUSINESS_NOISE, ' ')
+    .replace(STATE_COUNTRY_SUFFIX, '')
+    .replace(REPEATED_SUBURB_SUFFIX, '')
+    .trim();
+
+  return merchant;
+}
+
 export function getCategoryFromDescription(description: string): string {
-  const lowerDesc = description.toLowerCase();
-  
+  const merchant = extractMerchant(description);
+
+  if (merchant === 'transfer') return 'friends';
+  if (merchant === 'rent') return 'rent';
+  if (merchant === 'ticket') return 'entertainment';
+
+  const lowerMerchant = merchant.toLowerCase();
+
   for (const category in CATEGORY_KEYWORDS) {
-    if (CATEGORY_KEYWORDS[category].some(keyword => lowerDesc.includes(keyword))) {
+    if (CATEGORY_KEYWORDS[category].some(keyword => lowerMerchant.includes(keyword))) {
       return category;
     }
   }
-  
+
   return 'misc';
 }

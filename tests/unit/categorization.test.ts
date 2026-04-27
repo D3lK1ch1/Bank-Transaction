@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getCategoryFromDescription } from '@/lib/categories';
+import { getCategoryFromDescription, extractMerchant } from '@/lib/categories';
 import { categorizationTestCases } from '../fixtures/sample-transactions';
 
 describe('Categorization', () => {
@@ -162,6 +162,50 @@ describe('Categorization', () => {
     it('should handle bank transfers', () => {
       expect(getCategoryFromDescription('Transfer to John Smith')).toBe('friends');
       expect(getCategoryFromDescription('Mobile Banking Payment')).toBe('friends');
+    });
+  });
+
+  describe('extractMerchant - ANZ real descriptions', () => {
+    it('should return transfer signal for internal fund transfers', () => {
+      expect(extractMerchant('ANZ M-BANKING FUNDS TFER TRANSFER 180049 FROM 432919512')).toBe('transfer');
+    });
+
+    it('should return rent signal for OURPROPERTY rent payment', () => {
+      expect(extractMerchant('PAYMENT TO OURPROPERTY COM RNT THHGROUP 02MAR')).toBe('rent');
+    });
+
+    it('should return ticket signal for university event ticket', () => {
+      expect(extractMerchant('VISA DEBIT PURCHASE CARD 1127 RUBRIC * DEAKI-UNI TICK BURWOOD')).toBe('ticket');
+    });
+
+    it('should strip EFTPOS prefix and address from restaurant', () => {
+      expect(extractMerchant('EFTPOS AUSTRALIA XIN DONG BEI PT\\CLAYTON VIC AU')).toBe('AUSTRALIA XIN DONG BEI');
+    });
+
+    it('should strip VISA DEBIT prefix and PTY LTD from merchant', () => {
+      expect(extractMerchant('VISA DEBIT PURCHASE CARD 1127 SMOLBITEZ PTY LTD MELBOURNE')).toBe('SMOLBITEZ');
+    });
+
+    it('should strip EFTPOS prefix from 7-Eleven with address', () => {
+      expect(extractMerchant('VISA DEBIT PURCHASE CARD 1127 7-ELEVEN 1146 CARLTON')).toBe('7-ELEVEN 1146 CARLTON');
+    });
+
+    it('should strip EFTPOS prefix and address from Shell', () => {
+      expect(extractMerchant('EFTPOS SHELL CLAYTON CLAYTON AU')).toBe('SHELL');
+    });
+  });
+
+  describe('getCategoryFromDescription - ANZ real descriptions', () => {
+    it('should categorize internal transfer as friends', () => {
+      expect(getCategoryFromDescription('ANZ M-BANKING FUNDS TFER TRANSFER 180049 FROM 432919512')).toBe('friends');
+    });
+
+    it('should categorize OURPROPERTY rent payment as rent', () => {
+      expect(getCategoryFromDescription('PAYMENT TO OURPROPERTY COM RNT THHGROUP 02MAR')).toBe('rent');
+    });
+
+    it('should categorize university event ticket as entertainment', () => {
+      expect(getCategoryFromDescription('VISA DEBIT PURCHASE CARD 1127 RUBRIC * DEAKI-UNI TICK BURWOOD')).toBe('entertainment');
     });
   });
 
