@@ -28,7 +28,7 @@ export function parseTransactions(rawText: string): ParsedData {
   
   let i = headerInfo.startIndex;
   while (i < lines.length) {
-    const transaction = extractTransaction(lines, i, headerInfo.format);
+    const transaction = extractTransaction(lines, i, headerInfo.format, headerInfo.columnMap, headerInfo.dateFormat);
     if (transaction.parsed) {
       transactions.push(transaction.transaction);
       i = transaction.nextIndex;
