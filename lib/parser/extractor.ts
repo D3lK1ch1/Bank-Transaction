@@ -1,7 +1,6 @@
 import type { Transaction } from '../types';
-import type { FormatType } from './types';
+import type { DateFormat, FormatType } from './types';
 
-const TRANSACTION_REGEX = /^\d{1,2}\s+[A-Z]{3}/i;
 const MONTH_HEADER_REGEX = /^[A-Z]{3}\s+\d{4}$/i;
 const BLANK_LINE_REGEX = /^blank$/i;
 
@@ -11,10 +10,29 @@ export interface ExtractionResult {
   nextIndex: number;
 }
 
+function TRANSACTION_REGEX(dateFormat: DateFormat): RegExp {
+  switch (dateFormat) {
+    case 'DD MMM':
+      return /^\d{1,2}\s+[A-Z]{3}/i;
+    case 'DD/MM/YYYY':
+      return /^\d{1,2}\/\d{1,2}\/\d{4}/;
+    case 'DD/MM/YY':
+      return /^\d{1,2}\/\d{1,2}\/\d{2}/;
+    case 'YYYY-MM-DD':
+      return /^\d{4}-\d{1,2}-\d{1,2}/;
+    case 'MMM DD, YYYY':
+      return /^[A-Z]{3}\s+\d{1,2},\s+\d{4}/i;
+    default:
+      return /^\d{1,2}\s+[A-Z]{3}/i; // Fallback to common format
+  } 
+}
+
 export function extractTransaction(
   lines: string[],
   startIndex: number,
-  format: FormatType = 'column'
+  format: FormatType = 'column',
+  columnMap: Record<string, number> = {},
+  dateFormat: DateFormat = 'unknown'
 ): ExtractionResult {
   if (BLANK_LINE_REGEX.test(lines[startIndex])) {
     return { parsed: false, transaction: {} as Transaction, nextIndex: startIndex + 1 };
@@ -24,7 +42,7 @@ export function extractTransaction(
     return { parsed: false, transaction: {} as Transaction, nextIndex: startIndex + 1 };
   }
   
-  if (!TRANSACTION_REGEX.test(lines[startIndex])) {
+  if (!TRANSACTION_REGEX(dateFormat).test(lines[startIndex])) {
     return { parsed: false, transaction: {} as Transaction, nextIndex: startIndex + 1 };
   }
   
@@ -32,7 +50,7 @@ export function extractTransaction(
   let nextIndex = startIndex + 1;
   
   while (nextIndex < lines.length && 
-         !TRANSACTION_REGEX.test(lines[nextIndex]) && 
+         !TRANSACTION_REGEX(dateFormat).test(lines[nextIndex]) && 
          !MONTH_HEADER_REGEX.test(lines[nextIndex])) {
     if (!BLANK_LINE_REGEX.test(lines[nextIndex])) {
       fullLine += ' ' + lines[nextIndex];
@@ -54,7 +72,7 @@ export function extractTransaction(
   if (format === 'line') {
     ({ amount, type, description } = extractLineFormat(fullLine, date));
   } else {
-    ({ amount, type, balance, description } = extractColumnFormat(fullLine, parts, date));
+    ({ amount, type, balance, description } = extractColumnFormat(fullLine, parts, date, columnMap));
   }
   
   if (amount === 0) {
@@ -99,16 +117,40 @@ function extractLineFormat(fullLine: string, date: string):
 function extractColumnFormat(
   fullLine: string, 
   parts: string[], 
-  date: string
+  date: string, 
+  columnMap: Record<string, number>
 ): { amount: number; type: 'debit' | 'credit'; balance?: number; description: string } {
   const amountRegex = /(\d[\d,]*(?:\.\d{1,2})?)/g;
   const matches = fullLine.match(amountRegex) || [];
-  
   const dayNum = parseInt(parts[0]);
   const numericTokens = matches.filter(m => {
     const val = parseFloat(m.replace(/,/g, ''));
     return val >= 0 && val !== dayNum;
   });
+  const withdrawalIdx = columnMap['withdrawal'];
+  const depositIdx = columnMap['deposit'];
+  const balanceIdx = columnMap['balance'];
+
+  if (withdrawalIdx >= 0 && withdrawalIdx < parts.length) {
+    const val = parseFloat(parts[withdrawalIdx].replace(/,/g, ''));
+    if (!isNaN(val) && val > 0) {
+      return { amount: val, type: 'debit', description: parts.slice(2, withdrawalIdx).join(' ') };
+    }
+
+    if (depositIdx >= 0 && depositIdx < parts.length) {
+      const depVal = parseFloat(parts[depositIdx].replace(/,/g, ''));
+      if (!isNaN(depVal) && depVal > 0) {
+        return { amount: depVal, type: 'credit', description: parts.slice(2, depositIdx).join(' ') };
+      }
+
+      if (balanceIdx >= 0 && balanceIdx < parts.length) {
+        const balVal = parseFloat(parts[balanceIdx].replace(/,/g, ''));
+        if (!isNaN(balVal)) {
+          return { amount: val, type: 'debit', balance: balVal, description: parts.slice(2, withdrawalIdx).join(' ') };
+        }
+      }
+    }
+  }
   
   if (numericTokens.length < 2) {
     return { amount: 0, type: 'debit', description: '' };
