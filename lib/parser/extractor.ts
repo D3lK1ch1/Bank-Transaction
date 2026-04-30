@@ -72,7 +72,7 @@ export function extractTransaction(
   if (format === 'line') {
     ({ amount, type, description } = extractLineFormat(fullLine, date));
   } else {
-    ({ amount, type, balance, description } = extractColumnFormat(fullLine, parts, date, columnMap));
+    ({ amount, type, balance, description } = extractColumnFormat(fullLine, parts));
   }
   
   if (amount === 0) {
@@ -117,8 +117,6 @@ function extractLineFormat(fullLine: string, date: string):
 function extractColumnFormat(
   fullLine: string, 
   parts: string[], 
-  date: string, 
-  columnMap: Record<string, number>
 ): { amount: number; type: 'debit' | 'credit'; balance?: number; description: string } {
   const amountRegex = /(\d[\d,]*(?:\.\d{1,2})?)/g;
   const matches = fullLine.match(amountRegex) || [];
