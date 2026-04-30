@@ -34,14 +34,15 @@ export function findTransactionHeader(lines: string[]): HeaderInfo {
   const startIndex = headerIndex >= 0 ? headerIndex + 1 : 0;
   const sampleLines = lines.slice(startIndex, startIndex + 50);
   const columnMap : Record<string, number> = {};
-  columnMap['date'] = headerLine.toLowerCase().indexOf('date');
-  columnMap['description'] = headerLine.toLowerCase().indexOf('description');
-  columnMap['withdrawal'] = headerLine.toLowerCase().indexOf('withdrawal');
-  columnMap['deposit'] = headerLine.toLowerCase().indexOf('deposit');
-  columnMap['amount'] = headerLine.toLowerCase().indexOf('amount');
-  columnMap['balance'] = headerLine.toLowerCase().indexOf('balance');
+  const headerTokens = headerLine.toLowerCase().split(/\s+/);
+  columnMap['date'] = headerTokens.indexOf('date');
+  columnMap['description'] = headerTokens.indexOf('description');
+  columnMap['withdrawal'] = headerTokens.indexOf('withdrawal');
+  columnMap['deposit'] = headerTokens.indexOf('deposit');
+  columnMap['amount'] = headerTokens.indexOf('amount');
+  columnMap['balance'] = headerTokens.indexOf('balance');
   const format = detectFormat(headerLine);
-  const dateFormat = detectDateFormat(headerLine);
+  const dateFormat = detectDateFormat(sampleLines);
 
   return { headerLine, headerIndex, columnMap, format, startIndex, sampleLines, dateFormat };
 }
@@ -61,7 +62,7 @@ function detectFormat(headerLine: string): FormatType {
   return 'unknown';
 }
 
-function detectDateFormat(headerLine: string): DateFormat {
+function detectDateFormat(sampleLines: string[]): DateFormat {
   const datePatterns = [
     { pattern: /^\d{1,2}\s+[A-Z]{3}/i, format: 'DD MMM' },
     { pattern: /^\d{1,2}\/\d{1,2}\/\d{4}/i, format: 'DD/MM/YYYY' },
@@ -70,5 +71,9 @@ function detectDateFormat(headerLine: string): DateFormat {
     { pattern: /^[A-Z]{3}\s+\d{1,2},\s+\d{4}/i, format: 'MMM DD, YYYY' },
   ];
 
+  for (const { pattern, format } of datePatterns) {
+    if (sampleLines.some(line => pattern.test(line))) 
+      return format as DateFormat;
+  }
   return 'unknown';
 }

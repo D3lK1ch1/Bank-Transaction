@@ -127,31 +127,6 @@ function extractColumnFormat(
     const val = parseFloat(m.replace(/,/g, ''));
     return val >= 0 && val !== dayNum;
   });
-  const withdrawalIdx = columnMap['withdrawal'];
-  const depositIdx = columnMap['deposit'];
-  const balanceIdx = columnMap['balance'];
-
-  if (withdrawalIdx >= 0 && withdrawalIdx < parts.length) {
-    const val = parseFloat(parts[withdrawalIdx].replace(/,/g, ''));
-    if (!isNaN(val) && val > 0) {
-      return { amount: val, type: 'debit', description: parts.slice(2, withdrawalIdx).join(' ') };
-    }
-
-    if (depositIdx >= 0 && depositIdx < parts.length) {
-      const depVal = parseFloat(parts[depositIdx].replace(/,/g, ''));
-      if (!isNaN(depVal) && depVal > 0) {
-        return { amount: depVal, type: 'credit', description: parts.slice(2, depositIdx).join(' ') };
-      }
-
-      if (balanceIdx >= 0 && balanceIdx < parts.length) {
-        const balVal = parseFloat(parts[balanceIdx].replace(/,/g, ''));
-        if (!isNaN(balVal)) {
-          return { amount: val, type: 'debit', balance: balVal, description: parts.slice(2, withdrawalIdx).join(' ') };
-        }
-      }
-    }
-  }
-  
   if (numericTokens.length < 2) {
     return { amount: 0, type: 'debit', description: '' };
   }
