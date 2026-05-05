@@ -112,8 +112,43 @@ export const categorizationTestCases: { description: string; expectedCategory: s
   { description: 'Random Description XYZ', expectedCategory: 'misc' },
 ];
 
-export const summaryTestData: { transactions: Transaction[]; expected: { totalDeposits: number; totalWithdrawals: number; netAmount: number } }[] = [
+// CBA format: DD MMM YYYY date, Debit/Credit columns (CR suffix on credits), Balance
+export const sampleCBAFormatText = `
+Commonwealth Bank Statement
+
+Date            Description                                    Debit      Credit     Balance
+--------------------------------------------------------------------------------------------
+1 Jul 2021      Cash Deposit CBA ATM                                      4,700.00   8,995.52
+2 Jul 2021      TPG INTERNET PTY LTD NORTH RYDE NS AUS         59.99                 8,935.53
+5 Jul 2021      WOOLWORTHS 1234 SYDNEY NSW                     112.40                8,823.13
+8 Jul 2021      Credit Interest Earned on this Account                    3.21       8,826.34
+10 Jul 2021     NETFLIX.COM AUSTRALIA                          17.99                 8,808.35
+--------------------------------------------------------------------------------------------
+`;
+
+// NAB format: DD MMM YYYY or DD/MM/YYYY date, Particulars column (not Description), Debit/Credit/Balance
+export const sampleNABFormatText = `
+NAB Account Statement
+
+Date         Particulars                              Debit        Credit       Balance
+---------------------------------------------------------------------------------------
+01 Jul 2021  Salary Credit                                         2,000.00     20,000.00
+05 Jul 2021  COLES SUPERMARKET EAST MELBOURNE         100.50                   19,899.50
+12 Jul 2021  UBER EATS MELBOURNE VIC                  20.00                    19,879.50
+18 Jul 2021  Transfer from Savings                               500.00        20,379.50
+25 Jul 2021  ELECTRICITY BILL AEMO                    89.99                    20,289.51
+---------------------------------------------------------------------------------------
+`;
+
+export const summaryTestData: { text: string; transactions: Transaction[]; expected: { totalDeposits: number; totalWithdrawals: number; netAmount: number } }[] = [
   {
+    text: `
+Date Transaction Detail             Withdrawal  Deposit  Balance
+-----------------------------------------------------------------
+ 1 Jan Deposit                             0.00    1000.00  10000.00
+ 2 Jan Purchase                          50.00       0.00   9975.00
+ 3 Jan Purchase                          25.00       0.00   9950.00
+`,
     transactions: [
       { date: '1 Jan', description: 'Deposit', amount: 1000.00, type: 'credit' },
       { date: '2 Jan', description: 'Purchase', amount: 50.00, type: 'debit' },
@@ -122,6 +157,15 @@ export const summaryTestData: { transactions: Transaction[]; expected: { totalDe
     expected: { totalDeposits: 1000.00, totalWithdrawals: 75.00, netAmount: 925.00 },
   },
   {
+    text: `
+Date Transaction Detail             Withdrawal  Deposit  Balance
+-----------------------------------------------------------------
+ 1 Jan Salary                              0.00    3500.00  10000.00
+ 5 Jan Rent                              1200.00       0.00   8800.00
+10 Jan Groceries                         156.23       0.00   8643.77
+15 Jan Transfer In                          0.00     500.00   9143.77
+20 Jan Entertainment                      45.00       0.00   9098.77
+`,
     transactions: [
       { date: '1 Jan', description: 'Salary', amount: 3500.00, type: 'credit' },
       { date: '5 Jan', description: 'Rent', amount: 1200.00, type: 'debit' },
