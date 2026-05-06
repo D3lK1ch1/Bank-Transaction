@@ -13,7 +13,9 @@ export interface ExtractionResult {
 function TRANSACTION_REGEX(dateFormat: DateFormat): RegExp {
   switch (dateFormat) {
     case 'DD MMM':
-      return /^\d{1,2}\s+[A-Z]{3}/i;
+      return /^\d{1,2}\s+[A-Z]{3}(?:\s+\d{4})?/i;
+    case 'DD MMM YYYY':
+      return /^\d{1,2}\s+[A-Z]{3}\s+\d{4}/i;
     case 'DD/MM/YYYY':
       return /^\d{1,2}\/\d{1,2}\/\d{4}/;
     case 'DD/MM/YY':
@@ -63,7 +65,12 @@ export function extractTransaction(
     return { parsed: false, transaction: {} as Transaction, nextIndex };
   }
   
-  const date = parts[0] + ' ' + parts[1];
+  let dateParts = 2;
+  if (dateFormat === 'DD MMM YYYY' || dateFormat === 'YYYY-MM-DD' || dateFormat === 'MMM DD, YYYY') {
+    dateParts = 3;
+  }
+  const fullDate = parts.slice(0, dateParts).join(' ');
+  const date = fullDate.replace(/\s+\d{4}$/, '');
   let amount = 0;
   let type: 'debit' | 'credit';
   let balance: number | undefined;
@@ -72,7 +79,7 @@ export function extractTransaction(
   if (format === 'line') {
     ({ amount, type, description } = extractLineFormat(fullLine, date));
   } else {
-    ({ amount, type, balance, description } = extractColumnFormat(fullLine, parts));
+    ({ amount, type, balance, description } = extractColumnFormat(fullLine, parts, columnMap, dateFormat));
   }
   
   if (amount === 0) {
@@ -116,48 +123,79 @@ function extractLineFormat(fullLine: string, date: string):
 
 function extractColumnFormat(
   fullLine: string, 
-  parts: string[], 
+  parts: string[],
+  columnMap: Record<string, number> = {},
+  dateFormat: DateFormat = 'unknown',
 ): { amount: number; type: 'debit' | 'credit'; balance?: number; description: string } {
   const amountRegex = /(\d[\d,]*(?:\.\d{1,2})?)/g;
   const matches = fullLine.match(amountRegex) || [];
   const dayNum = parseInt(parts[0]);
+  const yearNum = parts.length >= 3 && /^\d{4}$/.test(parts[2]) ? parseFloat(parts[2]) : NaN;
   const numericTokens = matches.filter(m => {
     const val = parseFloat(m.replace(/,/g, ''));
-    return val >= 0 && val !== dayNum;
+    return val >= 0 && val !== dayNum && (isNaN(yearNum) || val !== yearNum);
   });
   if (numericTokens.length < 2) {
     return { amount: 0, type: 'debit', description: '' };
   }
   
   const firstAmountMatch = fullLine.indexOf(numericTokens[0]);
-  const description = fullLine.substring(0, firstAmountMatch).replace(/^\d+\s+\w+\s+/, '').trim();
+  const datePattern = dateFormat === 'DD MMM YYYY' ? /^\d+\s+[A-Za-z]+\s+\d{4}/ : /^\d+\s+[A-Za-z]+/;
+  const description = fullLine.substring(0, firstAmountMatch).replace(datePattern, '').trim();
   
   const parseNum = (s: string) => parseFloat(s.replace(/,/g, ''));
+  const descLower = description.toLowerCase();
+  const isCreditTransaction = /credit|deposit|interest|salary/i.test(descLower);
   
-  let withdrawalAmt = NaN;
-  let depositAmt = NaN;
-  let balanceAmt = NaN;
+  const withdrawalCol = columnMap['withdrawal'] ?? -1;
+  const depositCol = columnMap['deposit'] ?? -1;
+  // CBA/NAB format (has Debit/Credit columns)
+  if (withdrawalCol !== -1 && depositCol !== -1) {
+    if (numericTokens.length >= 3) {
+      // 3 tokens: debit, credit, balance
+      const debitAmt = parseNum(numericTokens[numericTokens.length - 3]);
+      const creditAmt = parseNum(numericTokens[numericTokens.length - 2]);
+      const balanceAmt = parseNum(numericTokens[numericTokens.length - 1]);
+      
+      if (creditAmt > 0) {
+        return { amount: creditAmt, type: 'credit', balance: balanceAmt, description };
+      } else if (debitAmt > 0) {
+        return { amount: debitAmt, type: 'debit', balance: balanceAmt, description };
+      }
+    } else if (numericTokens.length === 2) {
+      // 2 tokens: amount + balance (one column is empty)
+      const amount = parseNum(numericTokens[0]);
+      const balance = parseNum(numericTokens[1]);
+      
+      if (amount > 0 && isCreditTransaction) {
+        return { amount, type: 'credit', balance, description };
+      } else if (amount > 0) {
+        return { amount, type: 'debit', balance, description };
+      }
+    }
+  }
   
+  // ANZ format (withdrawal/deposit columns)
   if (numericTokens.length === 2) {
     const num0 = parseNum(numericTokens[0]);
     const num1 = parseNum(numericTokens[1]);
+    const type = isCreditTransaction ? 'credit' : 'debit';
     if (num1 > num0 * 3) {
-      balanceAmt = num1;
-      withdrawalAmt = num0;
+      // num1 is balance
+      return { amount: num0, type, balance: num1, description };
     } else {
-      withdrawalAmt = num0;
-      balanceAmt = num1;
+      return { amount: num0, type, balance: num1, description };
     }
   } else if (numericTokens.length >= 3) {
-    withdrawalAmt = parseNum(numericTokens[numericTokens.length - 3]);
-    depositAmt = parseNum(numericTokens[numericTokens.length - 2]);
-    balanceAmt = parseNum(numericTokens[numericTokens.length - 1]);
-  }
-  
-  if (!isNaN(withdrawalAmt) && withdrawalAmt > 0) {
-    return { amount: withdrawalAmt, type: 'debit', balance: isNaN(balanceAmt) ? undefined : balanceAmt, description };
-  } else if (!isNaN(depositAmt) && depositAmt > 0) {
-    return { amount: depositAmt, type: 'credit', balance: isNaN(balanceAmt) ? undefined : balanceAmt, description };
+    const withdrawalAmt = parseNum(numericTokens[numericTokens.length - 3]);
+    const depositAmt = parseNum(numericTokens[numericTokens.length - 2]);
+    const balanceAmt = parseNum(numericTokens[numericTokens.length - 1]);
+    
+    if (depositAmt > 0) {
+      return { amount: depositAmt, type: 'credit', balance: balanceAmt, description };
+    } else if (withdrawalAmt > 0) {
+      return { amount: withdrawalAmt, type: 'debit', balance: balanceAmt, description };
+    }
   }
   
   return { amount: 0, type: 'debit', description };

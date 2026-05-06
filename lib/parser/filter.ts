@@ -4,9 +4,11 @@ const EXCLUDE_PATTERNS = [
   /total/i,
   /subtotal/i,
   /^balance/i,
+  /opening balance/i,
+  /brought forward/i,
   /previous balance/i,
   /closing balance/i,
-  /page \d+/i,
+  /page \d+/i
 ];
 
 export function filterSummaryRows(transactions: Transaction[]): Transaction[] {
