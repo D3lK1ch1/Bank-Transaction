@@ -58,6 +58,119 @@ describe('Transaction Parser', () => {
       const transactionsWithBalance = result.transactions.filter(t => t.balance !== undefined);
       expect(transactionsWithBalance.length).toBeGreaterThan(0);
     });
+
+    it('should ignore ANZ row years and transfer reference numbers when parsing amounts', () => {
+      const text = `
+ANZ Bank Statement
+
+Date Transaction Details             Withdrawal  Deposit  Balance
+-----------------------------------------------------------------------
+08 JUL 2024 VISA DEBIT PURCHASE CARD 2606 MACS SNACK BAR MULGRAVE EFFECTIVE DATE 04 JUL $20.24 0.00 $1,024.00
+09 JUL 2024 ANZ M-BANKING FUNDS TFER TRANSFER 311463 FROM 432919512 43.29 0.00 980.71
+10 JUL 2024 Salary Deposit 0.00 +$500.00 1480.71
+`;
+      const result = parseTransactions(text);
+
+      expect(result.transactions).toHaveLength(3);
+      expect(result.transactions[0].date).toBe('08 JUL');
+      expect(result.transactions[0].amount).toBeCloseTo(20.24, 2);
+      expect(result.transactions[0].description).toContain('EFFECTIVE DATE 04 JUL');
+      expect(result.transactions[1].amount).toBeCloseTo(43.29, 2);
+      expect(result.transactions[1].amount).not.toBeCloseTo(2024, 2);
+      expect(result.transactions[1].amount).not.toBeCloseTo(432919512, 2);
+      expect(result.transactions[2].type).toBe('credit');
+      expect(result.transactions[2].amount).toBeCloseTo(500.00, 2);
+    });
+
+    it('should parse official ANZ table-style rows with category lines and placeholders', () => {
+      const text = `
+Date
+Description
+Category
+Withdrawal
+Deposit
+Amount
+08 JUL
+VISA DEBIT PURCHASE CARD 2606 MACS SNACK BAR MULGRAVE EFFECTIVE DATE 04 JUL
+food
+-$20.24
+-
+$-20.24
+09 JUL
+ANZ M-BANKING FUNDS TFER TRANSFER 311463 FROM 432919512
+friends
+-$43.29
+-
+$-43.29
+10 JUL
+ANZ M-BANKING FUNDS TFER TRANSFER 180049 FROM 432919512
+friends
+-
++$2000.00
++$2000.00
+`;
+      const result = parseTransactions(text);
+
+      expect(result.transactions).toHaveLength(3);
+      expect(result.transactions[0].description).toContain('EFFECTIVE DATE 04 JUL');
+      expect(result.transactions[0].amount).toBeCloseTo(20.24, 2);
+      expect(result.transactions[0].amount).not.toBeCloseTo(2024, 2);
+      expect(result.transactions[1].amount).toBeCloseTo(43.29, 2);
+      expect(result.transactions[1].amount).not.toBeCloseTo(432919512, 2);
+      expect(result.transactions[2].type).toBe('credit');
+      expect(result.transactions[2].amount).toBeCloseTo(2000.00, 2);
+    });
+
+    it('should reject official ANZ rows when displayed amounts are leaked description numbers', () => {
+      const text = `
+Date
+Description
+Category
+Withdrawal
+Deposit
+Amount
+08 JUL
+VISA DEBIT PURCHASE CARD 2606 MACS SNACK BAR MULGRAVE EFFECTIVE DATE 04 JUL
+food
+-$2024.00
+-
+$-2024.00
+09 JUL
+ANZ M-BANKING FUNDS TFER TRANSFER 311463 FROM 432919512
+friends
+-$432919512.00
+-
+$-432919512.00
+`;
+      const result = parseTransactions(text);
+
+      expect(result.transactions).toHaveLength(0);
+    });
+
+    it('should normalize merged ANZ date and transaction prefixes before parsing', () => {
+      const text = `
+ANZ Bank Statement
+
+Date Transaction Details             Withdrawal  Deposit  Balance
+-----------------------------------------------------------------------
+05 MARANZ MOBILE BANKING PAYMENT 181846 TO GREAT JOURNEY MIGRATION -$23.32 0.00 1976.68
+05 MARANZ M-BANKING FUNDS TFER TRANSFER 180049 FROM 432919512 0.00 +$2,000.00 3976.68
+04 MARVISA DEBIT PURCHASE CARD 1127 PUBLIC TRANSPORT VICTORIA DOCKLANDS $10.00 0.00 3966.68
+02 MARPAYMENT TO OURPROPERTY COM RNT THHGRP 02MAR 701.00 0.00 3265.68
+`;
+      const result = parseTransactions(text);
+
+      expect(result.transactions).toHaveLength(4);
+      expect(result.transactions[0].date).toBe('05 MAR');
+      expect(result.transactions[0].description).toContain('ANZ MOBILE BANKING PAYMENT');
+      expect(result.transactions[0].type).toBe('debit');
+      expect(result.transactions[0].amount).toBeCloseTo(23.32, 2);
+      expect(result.transactions[1].type).toBe('credit');
+      expect(result.transactions[1].amount).toBeCloseTo(2000.00, 2);
+      expect(result.transactions[1].amount).not.toBeCloseTo(432919512, 2);
+      expect(result.transactions[2].description).toContain('VISA DEBIT PURCHASE CARD');
+      expect(result.transactions[3].description).toContain('PAYMENT TO OURPROPERTY');
+    });
   });
 
   describe('parseTransactions - Line Format (Transaction Report)', () => {

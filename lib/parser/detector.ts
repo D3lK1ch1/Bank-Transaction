@@ -1,4 +1,4 @@
-import type { HeaderInfo, FormatType, DateFormat } from './types';
+import type { HeaderInfo, FormatType } from './types';
 
 const HEADER_PATTERNS = [
   /date.*transaction.*withdrawal.*deposit/i,
@@ -19,6 +19,19 @@ export function findTransactionHeader(lines: string[]): HeaderInfo {
       headerLine = line;
       break;
     }
+
+    const headerWindow = lines.slice(i, i + 6).map(l => l.toLowerCase());
+    if (
+      headerWindow[0] === 'date' &&
+      headerWindow[1] === 'description' &&
+      headerWindow.includes('withdrawal') &&
+      headerWindow.includes('deposit') &&
+      headerWindow.includes('amount')
+    ) {
+      headerIndex = i + headerWindow.indexOf('amount');
+      headerLine = 'Date Description Withdrawal Deposit Balance';
+      break;
+    }
   }
   
   if (headerIndex === -1) {
@@ -33,18 +46,9 @@ export function findTransactionHeader(lines: string[]): HeaderInfo {
   
   const startIndex = headerIndex >= 0 ? headerIndex + 1 : 0;
   const sampleLines = lines.slice(startIndex, startIndex + 50);
-  const columnMap : Record<string, number> = {};
-  const headerTokens = headerLine.toLowerCase().split(/\s+/);
-  columnMap['date'] = headerTokens.indexOf('date');
-  columnMap['description'] = headerTokens.indexOf('description');
-  columnMap['withdrawal'] = headerTokens.indexOf('withdrawal');
-  columnMap['deposit'] = headerTokens.indexOf('deposit');
-  columnMap['amount'] = headerTokens.indexOf('amount');
-  columnMap['balance'] = headerTokens.indexOf('balance');
   const format = detectFormat(headerLine);
-  const dateFormat = detectDateFormat(sampleLines);
 
-  return { headerLine, headerIndex, columnMap, format, startIndex, sampleLines, dateFormat };
+  return { headerLine, headerIndex, format, startIndex, sampleLines };
 }
 
 function detectFormat(headerLine: string): FormatType {
@@ -59,21 +63,5 @@ function detectFormat(headerLine: string): FormatType {
     return 'line';
   }
   
-  return 'unknown';
-}
-
-function detectDateFormat(sampleLines: string[]): DateFormat {
-  const datePatterns = [
-    { pattern: /^\d{1,2}\s+[A-Z]{3}/i, format: 'DD MMM' },
-    { pattern: /^\d{1,2}\/\d{1,2}\/\d{4}/i, format: 'DD/MM/YYYY' },
-    { pattern: /^\d{1,2}\/\d{1,2}\/\d{2}/i, format: 'DD/MM/YY' },
-    { pattern: /^\d{4}-\d{2}-\d{2}/i, format: 'YYYY-MM-DD' },
-    { pattern: /^[A-Z]{3}\s+\d{1,2},\s+\d{4}/i, format: 'MMM DD, YYYY' },
-  ];
-
-  for (const { pattern, format } of datePatterns) {
-    if (sampleLines.some(line => pattern.test(line))) 
-      return format as DateFormat;
-  }
   return 'unknown';
 }

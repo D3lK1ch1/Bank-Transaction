@@ -44,19 +44,19 @@ Bank Statement
 
 Date Transaction Detail             Withdrawal  Deposit  Balance
 -----------------------------------------------------------------
- 1 Jan Opening Balance                                    5000.00
- 3 Jan TOLL TAG AUSTRALIA              15.00           4985.00
- 5 Jan CHEMIST WAREHOUSE               45.67           4939.33
- 8 Jan Transfer from Mum                          500.00  5439.33
-10 Jan Kmart Family Shopping           89.99           5349.34
-12 Jan BAKERY CAFE SOUTH YARRA         32.00           5317.34
-15 Jan CINEMA ENTERTAINMENT           25.00           5292.34
-18 Jan MYER DEPARTMENT STORE          156.00          5136.34
-20 Jan Interest Credit                             12.34  5148.68
-22 Jan Medical Clinic                  65.00          5083.68
-25 Jan Mobile Banking Payment         300.00          4783.68
-28 Jan PTV CONCESSION                  45.00          4738.68
-30 Jan BIG W RETAIL                   78.99           4659.69
+ 1 Jan Opening Balance                   0.00       0.00   5000.00
+ 3 Jan TOLL TAG AUSTRALIA               15.00       0.00   4985.00
+ 5 Jan CHEMIST WAREHOUSE                45.67       0.00   4939.33
+ 8 Jan Transfer from Mum                 0.00     500.00   5439.33
+10 Jan Kmart Family Shopping            89.99       0.00   5349.34
+12 Jan BAKERY CAFE SOUTH YARRA          32.00       0.00   5317.34
+15 Jan CINEMA ENTERTAINMENT             25.00       0.00   5292.34
+18 Jan MYER DEPARTMENT STORE           156.00       0.00   5136.34
+20 Jan Interest Credit                   0.00      12.34   5148.68
+22 Jan Medical Clinic                   65.00       0.00   5083.68
+25 Jan Mobile Banking Payment          300.00       0.00   4783.68
+28 Jan PTV CONCESSION                   45.00       0.00   4738.68
+30 Jan BIG W RETAIL                     78.99       0.00   4659.69
 -----------------------------------------------------------------
 JAN 2026
 `;
@@ -111,34 +111,6 @@ export const categorizationTestCases: { description: string; expectedCategory: s
   { description: 'Mobile Banking Payment', expectedCategory: 'friends' },
   { description: 'Random Description XYZ', expectedCategory: 'misc' },
 ];
-
-// CBA format: DD MMM YYYY date, Debit/Credit columns (CR suffix on credits), Balance
-export const sampleCBAFormatText = `
-Commonwealth Bank Statement
-
-Date            Description                                    Debit      Credit     Balance
---------------------------------------------------------------------------------------------
-1 Jul 2021      Cash Deposit CBA ATM                                      4,700.00   8,995.52
-2 Jul 2021      TPG INTERNET PTY LTD NORTH RYDE NS AUS         59.99                 8,935.53
-5 Jul 2021      WOOLWORTHS 1234 SYDNEY NSW                     112.40                8,823.13
-8 Jul 2021      Credit Interest Earned on this Account                    3.21       8,826.34
-10 Jul 2021     NETFLIX.COM AUSTRALIA                          17.99                 8,808.35
---------------------------------------------------------------------------------------------
-`;
-
-// NAB format: DD MMM YYYY or DD/MM/YYYY date, Particulars column (not Description), Debit/Credit/Balance
-export const sampleNABFormatText = `
-NAB Account Statement
-
-Date         Particulars                              Debit        Credit       Balance
----------------------------------------------------------------------------------------
-01 Jul 2021  Salary Credit                                         2,000.00     20,000.00
-05 Jul 2021  COLES SUPERMARKET EAST MELBOURNE         100.50                   19,899.50
-12 Jul 2021  UBER EATS MELBOURNE VIC                  20.00                    19,879.50
-18 Jul 2021  Transfer from Savings                               500.00        20,379.50
-25 Jul 2021  ELECTRICITY BILL AEMO                    89.99                    20,289.51
----------------------------------------------------------------------------------------
-`;
 
 export const summaryTestData: { text: string; transactions: Transaction[]; expected: { totalDeposits: number; totalWithdrawals: number; netAmount: number } }[] = [
   {

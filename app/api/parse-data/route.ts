@@ -28,7 +28,6 @@ export async function POST(req: NextRequest) {
 
       const data = await pdfParse(fileBuffer);
       const parsedText = data.text;
-
       const parsedData = parseTransactions(parsedText);
 
       return new NextResponse(JSON.stringify({
