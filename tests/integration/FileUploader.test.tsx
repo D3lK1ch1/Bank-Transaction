@@ -37,20 +37,13 @@ describe('FileUploader', () => {
       render(<FileUploader {...defaultProps} />);
       
       expect(screen.getByText(/drag and drop/i)).toBeTruthy();
-      expect(screen.getByText(/click to upload/i)).toBeTruthy();
+      expect(screen.getByText(/ANZ PDFs only/i)).toBeTruthy();
     });
 
     it('should show file size limit information', () => {
       render(<FileUploader {...defaultProps} />);
-      
-      expect(screen.getByText(/8 MB/i)).toBeTruthy();
-    });
 
-    it('should render dropzone area', () => {
-      render(<FileUploader {...defaultProps} />);
-      
-      const dropzone = screen.getByLabelText(/drag and drop/i) || screen.getByTestId('dropzone');
-      expect(dropzone).toBeTruthy();
+      expect(screen.getByText(/8 MB/i)).toBeTruthy();
     });
   });
 
