@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { v4 as uuidv4 } from "uuid";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pdfParse = require("pdf-parse/lib/pdf-parse.js") as (buffer: Buffer) => Promise<{ text: string }>;
 import { parseTransactions } from "@/lib/transactionParser";
@@ -22,7 +21,6 @@ export async function POST(req: NextRequest) {
         return new NextResponse(JSON.stringify({ error: "File too large. Maximum size is 8MB." }), { status: 413 });
       }
 
-      const fileName = uuidv4();
       const fileBuffer = Buffer.from(await uploadedFile.arrayBuffer());
 
       const data = await pdfParse(fileBuffer);
@@ -37,7 +35,6 @@ export async function POST(req: NextRequest) {
       }), {
         headers: {
           "Content-Type": "application/json",
-          "FileName": fileName,
         },
       });
     } else {
