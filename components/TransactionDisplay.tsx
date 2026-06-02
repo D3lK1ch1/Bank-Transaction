@@ -49,6 +49,22 @@ export default function TransactionDisplay({
   const getWithdrawal = (t: Transaction) => (t.type === "debit" ? Math.abs(t.amount) : 0);
   const getSignedAmount = (t: Transaction) => (t.type === "debit" ? -Math.abs(t.amount) : Math.abs(t.amount));
 
+  const exportCSV = (txns: Transaction[], filename: string) => {
+    const header = "Date,Description,Category,Type,Amount";
+    const rows = txns.map((t) => {
+      const desc = `"${(t.description || "").replace(/"/g, '""')}"`;
+      return [t.date || "", desc, t.category || "misc", t.type, getSignedAmount(t).toFixed(2)].join(",");
+    });
+    const csv = [header, ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const getCategoryColor = (category: string) => {
     return CATEGORY_COLORS[category] || CATEGORY_COLORS.misc;
   };
@@ -84,6 +100,7 @@ export default function TransactionDisplay({
                         <div className="flex justify-between items-center">
                           <div>
                             <p className="font-semibold text-lg">{month}</p>
+                            <p className="text-xs text-gray-400">{monthTransactions.length} transactions</p>
                           </div>
                           <div className="text-right space-y-1">
                             <p className="text-green-600 font-semibold">
@@ -99,6 +116,12 @@ export default function TransactionDisplay({
                             >
                               Balance: {net >= 0 ? "+" : ""}${net.toFixed(2)}
                             </p>
+                            <button
+                              onClick={() => exportCSV(monthTransactions, `transactions-${month}.csv`)}
+                              className="mt-1 text-xs text-blue-600 hover:underline"
+                            >
+                              Export CSV
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -165,6 +188,15 @@ export default function TransactionDisplay({
       <CollapsibleSection title="All Transactions" defaultOpen={true}>
         {transactions.length > 0 ? (
           <div className="overflow-x-auto">
+            <div className="flex justify-between items-center mb-3">
+              <p className="text-sm text-gray-500">{transactions.length} transactions</p>
+              <button
+                onClick={() => exportCSV(transactions, "transactions-all.csv")}
+                className="text-sm text-blue-600 hover:underline"
+              >
+                Export all as CSV
+              </button>
+            </div>
             <table className="w-full text-sm">
               <thead className="bg-gray-50 border-b">
                 <tr>
@@ -177,7 +209,7 @@ export default function TransactionDisplay({
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {transactions.slice(0, 50).map((transaction, idx) => (
+                {transactions.map((transaction, idx) => (
                   <tr key={idx} className="hover:bg-gray-50">
                     <td className="p-3 text-gray-600">
                       {transaction.date || "N/A"}

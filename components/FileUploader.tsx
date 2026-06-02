@@ -109,7 +109,6 @@ export default function FileUpload({
       <div>
         <label
           {...getRootProps()}
-          htmlFor="dropzone-file"
           className="relative flex flex-col items-center justify-center w-full py-6 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100"
         >
           <div className="text-center">
@@ -117,13 +116,16 @@ export default function FileUpload({
               <UploadCloud size={20} />
             </div>
             <p className="mt-2 text-sm text-gray-600">
-              <span className="font-semibold">Drag and drop PDF files</span>
+              <span className="font-semibold">Drag and drop your ANZ bank statement</span>
             </p>
             <p className="text-xs text-gray-500">
-              Click to upload files (files should be under 8 MB)
+              ANZ PDFs only &middot; under 8 MB
             </p>
           </div>
         </label>
+        <p className="mt-2 text-xs text-center text-gray-400">
+          Your PDF is processed on our server to extract transactions. It is not stored or shared.
+        </p>
         <Input
           {...getInputProps()}
           id="dropzone-file"

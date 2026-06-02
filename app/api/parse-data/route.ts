@@ -11,7 +11,6 @@ export async function POST(req: NextRequest) {
 
   if (uploadedFiles && uploadedFiles.length > 0) {
     const uploadedFile = uploadedFiles[0];
-    console.log('Uploaded file:', uploadedFile);
 
     if (uploadedFile instanceof File) {
       if (!uploadedFile.type.includes("pdf") && !uploadedFile.name.endsWith(".pdf")) {
