@@ -82,7 +82,7 @@ export function extractTransaction(
 
 function extractLineFormat(fullLine: string, date: string): 
   { amount: number; type: 'debit' | 'credit'; description: string } {
-  const amountPattern = /\$\d[\d,]*/;
+  const amountPattern = /\$\d[\d,]*(?:\.\d{1,2})?/;
   const amountMatches = fullLine.match(amountPattern);
   
   if (!amountMatches || amountMatches.length === 0) {
