@@ -19,7 +19,7 @@ import { categorizeTransactions, groupByMonth } from './group';
 import { generateSummary } from './summarize';
 import { getCategoryFromDescription } from '../categories';
 
-const MERGED_ANZ_PREFIX_REGEX = /^(\d{1,2}\s+[A-Z]{3})(ANZ|VISA|EFTPOS|PAYMENT)\b/i;
+const MERGED_ANZ_PREFIX_REGEX = /^(\d{1,2}\s+[A-Z]{3})(ANZ|VISA|EFTPOS|PAYMENT|MTS)\b/i;
 const CATEGORY_LINE_REGEX = /^(groceries|food|transport|utilities|rent|education|shopping|entertainment|healthcare|friends|misc)$/i;
 
 export function parseTransactions(rawText: string): ParsedData {
