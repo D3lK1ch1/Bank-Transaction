@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { parseTransactions } from '@/lib/transactionParser';
+import { groupByMonth } from '@/lib/parser';
 import { monthlyGroupingTestData } from '../fixtures/sample-transactions';
 import { Transaction } from '@/lib/transactionParser';
 
@@ -46,20 +47,87 @@ describe('Monthly Grouping', () => {
       expect(result.monthlyGrouped[`${currentYear}-03`].length).toBe(1);
     });
 
-    it('should sort months chronologically', () => {
+    it('should preserve chronological insertion order', () => {
       const text = `
         Date Transaction Detail             Withdrawal  Deposit  Balance
         -----------------------------------------------------------------
+         1 Nov Transaction Nov              200.00    0.00     750.00
          5 Dec Transaction Dec              100.00    0.00    1000.00
          1 Jan Transaction Jan               50.00    0.00     950.00
-         1 Nov Transaction Nov              200.00    0.00     750.00
       `;
-      
+
       const result = parseTransactions(text);
       const months = Object.keys(result.monthlyGrouped);
-      
-      const currentYear = new Date().getFullYear().toString();
-      expect(months).toEqual([`${currentYear}-12`, `${currentYear}-01`, `${currentYear}-11`]);
+
+      const currentYear = new Date().getFullYear();
+      expect(months).toEqual([`${currentYear}-11`, `${currentYear}-12`, `${currentYear + 1}-01`]);
+    });
+
+    it('should carry the year forward across a Dec→Jan rollover', () => {
+      const text = `
+        Date Transaction Detail             Withdrawal  Deposit  Balance
+        -----------------------------------------------------------------
+         1 Nov Transaction Nov              200.00    0.00     750.00
+         5 Dec Transaction Dec              100.00    0.00    1000.00
+         1 Jan Transaction Jan               50.00    0.00     950.00
+        15 Jan Transaction Jan 2            75.00    0.00     875.00
+      `;
+
+      const result = parseTransactions(text);
+      const currentYear = new Date().getFullYear();
+
+      expect(result.monthlyGrouped[`${currentYear}-11`].length).toBe(1);
+      expect(result.monthlyGrouped[`${currentYear}-12`].length).toBe(1);
+      expect(result.monthlyGrouped[`${currentYear}-01`]).toBeUndefined();
+      expect(result.monthlyGrouped[`${currentYear + 1}-01`]).toBeDefined();
+      expect(result.monthlyGrouped[`${currentYear + 1}-01`].length).toBe(2);
+    });
+
+    it('should trust an explicit year on the date over rollover guessing', () => {
+      const transactions: Transaction[] = [
+        { date: '5 Dec 2025', description: 'Transaction Dec', amount: 100, type: 'debit', category: 'misc' },
+        { date: '1 Jan 2026', description: 'Transaction Jan', amount: 50, type: 'debit', category: 'misc' },
+      ];
+
+      const result = groupByMonth(transactions);
+
+      expect(Object.keys(result)).toEqual(['2025-12', '2026-01']);
+    });
+
+    it('should not treat a normal month-to-month step backward as a year rollover (descending statement order)', () => {
+      const transactions: Transaction[] = [
+        { date: '20 Jul', description: 'Transaction Jul', amount: 100, type: 'debit', category: 'misc' },
+        { date: '15 Jun', description: 'Transaction Jun', amount: 50, type: 'debit', category: 'misc' },
+        { date: '10 May', description: 'Transaction May', amount: 25, type: 'debit', category: 'misc' },
+        { date: '5 Apr', description: 'Transaction Apr', amount: 10, type: 'debit', category: 'misc' },
+      ];
+
+      const result = groupByMonth(transactions);
+      const currentYear = new Date().getFullYear();
+
+      expect(Object.keys(result)).toEqual([
+        `${currentYear}-07`,
+        `${currentYear}-06`,
+        `${currentYear}-05`,
+        `${currentYear}-04`,
+      ]);
+    });
+
+    it('should carry the year backward across a Jan→Dec rollover in descending order', () => {
+      const transactions: Transaction[] = [
+        { date: '15 Jan', description: 'Transaction Jan', amount: 50, type: 'debit', category: 'misc' },
+        { date: '20 Dec', description: 'Transaction Dec', amount: 100, type: 'debit', category: 'misc' },
+        { date: '10 Nov', description: 'Transaction Nov', amount: 200, type: 'debit', category: 'misc' },
+      ];
+
+      const result = groupByMonth(transactions);
+      const currentYear = new Date().getFullYear();
+
+      expect(Object.keys(result)).toEqual([
+        `${currentYear}-01`,
+        `${currentYear - 1}-12`,
+        `${currentYear - 1}-11`,
+      ]);
     });
 
     it('should handle all months of the year', () => {
