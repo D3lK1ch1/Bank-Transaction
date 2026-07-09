@@ -20,6 +20,7 @@ A personal finance web app that parses ANZ bank statement PDFs and breaks down s
 - Parses transactions: date, description, withdrawal, deposit, running balance
 - Categorises spending: groceries, food, transport, utilities, rent, education, shopping, friends, misc
 - Monthly breakdown with deposits, withdrawals and net per month
+- Calendar view — every transaction shown on its actual day, colour-coded by category, reading `Merchant - Category - ±$Amount`; step through every month a statement covers
 - Export any month — or all transactions — as a CSV
 - Privacy-first: PDF is processed in memory and discarded immediately after parsing, never written to disk or stored
 
@@ -83,8 +84,6 @@ npm run test:coverage # with coverage report
 ## Roadmap
 
 - [ ] Smarter categorisation — pattern-based rules instead of static keyword lists
-- [ ] Multi-bank support (CBA, NAB, Westpac)
-- [ ] Data visualisation — charts per category and month
 
 ---
 

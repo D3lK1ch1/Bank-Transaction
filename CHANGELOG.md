@@ -5,7 +5,14 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
-## [Unreleased]
+## [0.3.0] - 2027-07-09 — Calendar feature
+
+### Added
+- Calendar View — a day-by-day monthly grid showing every transaction on its actual date, colour-coded by category, each line reading `Merchant - Category - ±$Amount`; navigate across every month present in a statement (`components/CalendarView.tsx`)
+- `groupByDay` (`lib/parser/group.ts`) — buckets a month's transactions by day of month and attaches the extracted merchant name to each
+
+### Fixed
+- `groupByMonth` stamped every transaction with today's real-world calendar year instead of the statement's actual year, since ANZ dates never carry a year token in the common extraction path. An initial rollover-detection fix assumed statements always list transactions in ascending chronological order; real ANZ statements can list months descending (most recent first), which made the year run away by one on every month step. Now only an actual Dec↔Jan adjacency shifts the year, in whichever direction the statement is ordered — a real year token on the date, when present, is still trusted over any guess.
 
 ---
 
