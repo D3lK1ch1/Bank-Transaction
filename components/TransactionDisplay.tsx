@@ -4,6 +4,7 @@ import type { Transaction } from "@/lib/types";
 import { CATEGORY_COLORS } from "@/lib/categories";
 import { useState } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
+import CalendarView from "@/components/CalendarView";
 
 interface CollapsibleSectionProps {
   title: string;
@@ -182,6 +183,11 @@ export default function TransactionDisplay({
             </div>
           )}
         </div>
+      </CollapsibleSection>
+
+      {/* Calendar View */}
+      <CollapsibleSection title="Calendar View" defaultOpen={true}>
+        <CalendarView monthlyGrouped={monthlyGrouped} />
       </CollapsibleSection>
 
       {/* All Transactions */}
