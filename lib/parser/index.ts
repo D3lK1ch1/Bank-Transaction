@@ -9,7 +9,8 @@ export { findTransactionHeader } from './detector';
 export { extractTransaction } from './extractor';
 export type { ExtractionResult } from './extractor';
 export { filterSummaryRows } from './filter';
-export { categorizeTransactions, groupByMonth } from './group';
+export { categorizeTransactions, groupByMonth, groupByDay } from './group';
+export type { DayTransaction } from './group';
 export { generateSummary } from './summarize';
 
 import { findTransactionHeader } from './detector';
