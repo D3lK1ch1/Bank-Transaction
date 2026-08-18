@@ -23,9 +23,20 @@ export async function POST(req: NextRequest) {
 
       const fileBuffer = Buffer.from(await uploadedFile.arrayBuffer());
 
-      const data = await pdfParse(fileBuffer);
-      const parsedText = data.text;
-      const parsedData = parseTransactions(parsedText);
+      let parsedText: string;
+      try {
+        const data = await pdfParse(fileBuffer);
+        parsedText = data.text;
+      } catch {
+        return new NextResponse(JSON.stringify({ error: "Could not read this PDF. It may be corrupted or password-protected." }), { status: 422 });
+      }
+
+      let parsedData: ReturnType<typeof parseTransactions>;
+      try {
+        parsedData = parseTransactions(parsedText);
+      } catch {
+        return new NextResponse(JSON.stringify({ error: "Could not find transaction data in this statement." }), { status: 422 });
+      }
 
       return new NextResponse(JSON.stringify({
         transactions: parsedData.transactions,

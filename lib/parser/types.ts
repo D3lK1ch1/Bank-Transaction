@@ -1,4 +1,4 @@
-export type FormatType = 'column' | 'line' | 'unknown';
+export type FormatType = 'column' | 'line' | 'commonwealth' | 'unknown';
 
 export interface HeaderInfo {
   headerLine: string;

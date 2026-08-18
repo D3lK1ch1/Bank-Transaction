@@ -59,6 +59,8 @@ export function extractTransaction(
   
   if (format === 'line') {
     ({ amount, type, description } = extractLineFormat(fullLine, date));
+  } else if (format === 'commonwealth') {
+    ({ amount, type, balance, description } = extractCommonwealthFormat(fullLine, fullDate));
   } else {
     ({ amount, type, balance, description } = extractColumnFormat(fullLine, fullDate));
   }
@@ -100,6 +102,31 @@ function extractLineFormat(fullLine: string, date: string):
   const description = fullLine.substring(date.length, amountIndex).trim();
   
   return { amount, type, description };
+}
+
+const COMMONWEALTH_AMOUNT_REGEX = /(\d[\d,]*\.\d{2})\s+\$(\d[\d,]*\.\d{2})\s+(CR|DR)/;
+
+function extractCommonwealthFormat(
+  fullLine: string,
+  fullDate: string
+): { amount: number; type: 'debit' | 'credit'; balance?: number; description: string } {
+  const match = fullLine.match(COMMONWEALTH_AMOUNT_REGEX);
+  if (!match) {
+    return { amount: 0, type: 'debit', description: '' };
+  }
+
+  const amount = parseFloat(match[1].replace(/,/g, ''));
+  const balance = parseFloat(match[2].replace(/,/g, ''));
+  const amountStart = match.index ?? fullLine.length;
+  const description = fullLine.slice(fullDate.length, amountStart).trim();
+
+  // Placeholder: Commonwealth's extracted text collapses debit/credit into a single
+  // amount column, so type is guessed from keywords for now. Revisit with a
+  // balance-delta comparison against the previous transaction's balance later.
+  const isCredit = /credit|interest|refund|deposit|from|intl payment/i.test(description);
+  const type: 'debit' | 'credit' = isCredit ? 'credit' : 'debit';
+
+  return { amount, type, balance, description };
 }
 
 function extractColumnFormat(
