@@ -9,14 +9,14 @@ import {
 describe('Transaction Parser', () => {
   describe('parseTransactions - Column Format (ANZ Official)', () => {
     it('should extract transactions from ANZ column format statement', () => {
-      const result = parseTransactions(sampleColumnFormatText);
+      const result = parseTransactions(sampleColumnFormatText, 'anz');
       
       expect(result.transactions.length).toBeGreaterThan(0);
       expect(result.transactions.length).toBeLessThan(15);
     });
 
     it('should correctly identify debit transactions', () => {
-      const result = parseTransactions(sampleColumnFormatText);
+      const result = parseTransactions(sampleColumnFormatText, 'anz');
       const debits = result.transactions.filter(t => t.type === 'debit');
       
       expect(debits.length).toBeGreaterThan(0);
@@ -26,7 +26,7 @@ describe('Transaction Parser', () => {
     });
 
     it('should correctly identify credit transactions', () => {
-      const result = parseTransactions(sampleColumnFormatText);
+      const result = parseTransactions(sampleColumnFormatText, 'anz');
       const credits = result.transactions.filter(t => t.type === 'credit');
       
       expect(credits.length).toBeGreaterThan(0);
@@ -36,7 +36,7 @@ describe('Transaction Parser', () => {
     });
 
     it('should parse dates correctly', () => {
-      const result = parseTransactions(sampleColumnFormatText);
+      const result = parseTransactions(sampleColumnFormatText, 'anz');
       
       result.transactions.forEach(t => {
         expect(t.date).toMatch(/^\d{1,2}\s+[A-Za-z]{3}$/);
@@ -44,7 +44,7 @@ describe('Transaction Parser', () => {
     });
 
     it('should include description for each transaction', () => {
-      const result = parseTransactions(sampleColumnFormatText);
+      const result = parseTransactions(sampleColumnFormatText, 'anz');
       
       result.transactions.forEach(t => {
         expect(t.description).toBeTruthy();
@@ -53,7 +53,7 @@ describe('Transaction Parser', () => {
     });
 
     it('should calculate balance when available', () => {
-      const result = parseTransactions(sampleColumnFormatText);
+      const result = parseTransactions(sampleColumnFormatText, 'anz');
       
       const transactionsWithBalance = result.transactions.filter(t => t.balance !== undefined);
       expect(transactionsWithBalance.length).toBeGreaterThan(0);
@@ -69,7 +69,7 @@ Date Transaction Details             Withdrawal  Deposit  Balance
 09 JUL 2024 ANZ M-BANKING FUNDS TFER TRANSFER 311463 FROM 432919512 43.29 0.00 980.71
 10 JUL 2024 Salary Deposit 0.00 +$500.00 1480.71
 `;
-      const result = parseTransactions(text);
+      const result = parseTransactions(text, 'anz');
 
       expect(result.transactions).toHaveLength(3);
       expect(result.transactions[0].date).toBe('08 JUL');
@@ -109,7 +109,7 @@ friends
 +$2000.00
 +$2000.00
 `;
-      const result = parseTransactions(text);
+      const result = parseTransactions(text, 'anz');
 
       expect(result.transactions).toHaveLength(3);
       expect(result.transactions[0].description).toContain('EFFECTIVE DATE 04 JUL');
@@ -142,7 +142,7 @@ friends
 -
 $-432919512.00
 `;
-      const result = parseTransactions(text);
+      const result = parseTransactions(text, 'anz');
 
       expect(result.transactions).toHaveLength(0);
     });
@@ -158,7 +158,7 @@ Date Transaction Details             Withdrawal  Deposit  Balance
 04 MARVISA DEBIT PURCHASE CARD 1127 PUBLIC TRANSPORT VICTORIA DOCKLANDS $10.00 0.00 3966.68
 02 MARPAYMENT TO OURPROPERTY COM RNT THHGRP 02MAR 701.00 0.00 3265.68
 `;
-      const result = parseTransactions(text);
+      const result = parseTransactions(text, 'anz');
 
       expect(result.transactions).toHaveLength(4);
       expect(result.transactions[0].date).toBe('05 MAR');
@@ -175,21 +175,21 @@ Date Transaction Details             Withdrawal  Deposit  Balance
 
   describe('parseTransactions - Line Format (Transaction Report)', () => {
     it('should extract transactions from line format statement', () => {
-      const result = parseTransactions(sampleLineFormatText);
+      const result = parseTransactions(sampleLineFormatText, 'anz');
       
       expect(result.transactions.length).toBeGreaterThan(0);
       expect(result.transactions.length).toBeLessThan(15);
     });
 
     it('should detect debit transactions from description keywords', () => {
-      const result = parseTransactions(sampleLineFormatText);
+      const result = parseTransactions(sampleLineFormatText, 'anz');
       const debits = result.transactions.filter(t => t.type === 'debit');
       
       expect(debits.length).toBeGreaterThan(0);
     });
 
     it('should detect credit transactions from description keywords', () => {
-      const result = parseTransactions(sampleLineFormatText);
+      const result = parseTransactions(sampleLineFormatText, 'anz');
       const credits = result.transactions.filter(t => t.type === 'credit');
       
       expect(credits.length).toBeGreaterThan(0);
@@ -198,7 +198,7 @@ Date Transaction Details             Withdrawal  Deposit  Balance
     });
 
     it('should extract amounts with $ symbol', () => {
-      const result = parseTransactions(sampleLineFormatText);
+      const result = parseTransactions(sampleLineFormatText, 'anz');
       
       result.transactions.forEach(t => {
         expect(t.amount).toBeGreaterThan(0);
@@ -208,13 +208,13 @@ Date Transaction Details             Withdrawal  Deposit  Balance
 
   describe('parseTransactions - Mixed Format', () => {
     it('should handle mixed format bank statements', () => {
-      const result = parseTransactions(sampleMixedFormatText);
+      const result = parseTransactions(sampleMixedFormatText, 'anz');
       
       expect(result.transactions.length).toBeGreaterThan(0);
     });
 
     it('should categorize transactions', () => {
-      const result = parseTransactions(sampleMixedFormatText);
+      const result = parseTransactions(sampleMixedFormatText, 'anz');
       
       result.transactions.forEach(t => {
         expect(t.category).toBeTruthy();
@@ -223,7 +223,7 @@ Date Transaction Details             Withdrawal  Deposit  Balance
     });
 
     it('should calculate summary correctly', () => {
-      const result = parseTransactions(sampleMixedFormatText);
+      const result = parseTransactions(sampleMixedFormatText, 'anz');
       
       expect(result.summary).toBeDefined();
       expect(result.summary.totalTransactions).toBe(result.transactions.length);
@@ -234,7 +234,7 @@ Date Transaction Details             Withdrawal  Deposit  Balance
 
   describe('Summary Calculations', () => {
     it('should calculate total deposits correctly', () => {
-      const result = parseTransactions(sampleColumnFormatText);
+      const result = parseTransactions(sampleColumnFormatText, 'anz');
       
       const calculatedDeposits = result.transactions
         .filter(t => t.type === 'credit')
@@ -244,7 +244,7 @@ Date Transaction Details             Withdrawal  Deposit  Balance
     });
 
     it('should calculate total withdrawals correctly', () => {
-      const result = parseTransactions(sampleColumnFormatText);
+      const result = parseTransactions(sampleColumnFormatText, 'anz');
       
       const calculatedWithdrawals = result.transactions
         .filter(t => t.type === 'debit')
@@ -254,7 +254,7 @@ Date Transaction Details             Withdrawal  Deposit  Balance
     });
 
     it('should calculate net amount correctly', () => {
-      const result = parseTransactions(sampleColumnFormatText);
+      const result = parseTransactions(sampleColumnFormatText, 'anz');
       
       const expectedNet = result.summary.totalDeposits - result.summary.totalWithdrawals;
       expect(result.summary.netAmount).toBeCloseTo(expectedNet, 2);
@@ -263,7 +263,7 @@ Date Transaction Details             Withdrawal  Deposit  Balance
 
   describe('Filtering', () => {
     it('should exclude TOTAL rows from transactions', () => {
-      const result = parseTransactions(sampleColumnFormatText);
+      const result = parseTransactions(sampleColumnFormatText, 'anz');
       
       const hasTotalKeyword = result.transactions.some(
         t => t.description.toLowerCase().includes('total')
@@ -273,7 +273,7 @@ Date Transaction Details             Withdrawal  Deposit  Balance
 
     it('should exclude page headers', () => {
       const textWithPageHeaders = sampleColumnFormatText + '\nPage 2 of 5';
-      const result = parseTransactions(textWithPageHeaders);
+      const result = parseTransactions(textWithPageHeaders, 'anz');
       
       const hasPageKeyword = result.transactions.some(
         t => /page \d+/i.test(t.description)
@@ -284,7 +284,7 @@ Date Transaction Details             Withdrawal  Deposit  Balance
 
   describe('Categorization', () => {
     it('should categorize PTV transactions as transport', () => {
-      const result = parseTransactions(sampleColumnFormatText);
+      const result = parseTransactions(sampleColumnFormatText, 'anz');
       
       const ptvTransactions = result.transactions.filter(
         t => t.description.toUpperCase().includes('PTV')
@@ -296,7 +296,7 @@ Date Transaction Details             Withdrawal  Deposit  Balance
     });
 
     it('should categorize COLES as groceries', () => {
-      const result = parseTransactions(sampleColumnFormatText);
+      const result = parseTransactions(sampleColumnFormatText, 'anz');
       
       const colesTransactions = result.transactions.filter(
         t => t.description.toUpperCase().includes('COLES')
@@ -308,7 +308,7 @@ Date Transaction Details             Withdrawal  Deposit  Balance
     });
 
     it('should categorize UNIVERSITY as education', () => {
-      const result = parseTransactions(sampleColumnFormatText);
+      const result = parseTransactions(sampleColumnFormatText, 'anz');
       
       const uniTransactions = result.transactions.filter(
         t => t.description.toUpperCase().includes('UNIVERSITY')
@@ -322,7 +322,7 @@ Date Transaction Details             Withdrawal  Deposit  Balance
 
   describe('Grouped Data', () => {
     it('should group transactions by category', () => {
-      const result = parseTransactions(sampleColumnFormatText);
+      const result = parseTransactions(sampleColumnFormatText, 'anz');
       
       expect(Object.keys(result.categorized).length).toBeGreaterThan(0);
       
@@ -333,7 +333,7 @@ Date Transaction Details             Withdrawal  Deposit  Balance
     });
 
     it('should group transactions by month', () => {
-      const result = parseTransactions(sampleColumnFormatText);
+      const result = parseTransactions(sampleColumnFormatText, 'anz');
       
       expect(Object.keys(result.monthlyGrouped).length).toBeGreaterThan(0);
       
