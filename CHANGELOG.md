@@ -5,7 +5,23 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
-## [0.3.0] - 2027-07-09 — Calendar feature
+## Session 2026-09-21 — Multi-bank support (Commonwealth Bank)
+
+### Added
+- Bank selector on the upload zone (ANZ or Commonwealth Bank) — the dropzone stays disabled until a bank is chosen, and the selection is sent to the API as a `bank` form field (`components/FileUploader.tsx`)
+- Commonwealth Bank (CBA) parsing: two-line `Date` / `Transaction Debit Credit Balance` header detection, and row extraction for the `amount $balance CR/DR` layout (`lib/parser/detector.ts`, `lib/parser/extractor.ts`)
+- `Bank` type (`'anz' | 'commonwealth'`) exported from `lib/parser/types.ts`
+- Clear 422 errors from `/api/parse-data` when a PDF can't be read (corrupted or password-protected) or contains no transaction data
+- CBA parser tests (`tests/unit/commonwealthParser.test.ts`) and CBA fixtures
+
+### Changed
+- `parseTransactions(rawText, bank)` and `findTransactionHeader(lines, bank)` now require a bank; ANZ header detection is unchanged
+- `/api/parse-data` returns 400 if `bank` is missing or not one of `anz` / `commonwealth`
+- Upload copy is no longer ANZ-specific
+
+---
+
+## [0.3.0] - 2026-07-09 — Calendar feature
 
 ### Added
 - Calendar View — a day-by-day monthly grid showing every transaction on its actual date, colour-coded by category, each line reading `Merchant - Category - ±$Amount`; navigate across every month present in a statement (`components/CalendarView.tsx`)
