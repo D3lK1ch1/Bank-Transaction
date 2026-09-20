@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pdfParse = require("pdf-parse/lib/pdf-parse.js") as (buffer: Buffer) => Promise<{ text: string }>;
 import { parseTransactions } from "@/lib/transactionParser";
+import type { Bank } from "@/lib/transactionParser";
+
+const VALID_BANKS: Bank[] = ["anz", "commonwealth"];
 
 export async function POST(req: NextRequest) {
   const formData: FormData = await req.formData();
@@ -14,6 +17,11 @@ export async function POST(req: NextRequest) {
     if (uploadedFile instanceof File) {
       if (!uploadedFile.type.includes("pdf") && !uploadedFile.name.endsWith(".pdf")) {
         return new NextResponse(JSON.stringify({ error: "Only PDF files are accepted. Please upload a bank statement PDF." }), { status: 400 });
+      }
+
+      const bank = formData.get("bank");
+      if (typeof bank !== "string" || !VALID_BANKS.includes(bank as Bank)) {
+        return new NextResponse(JSON.stringify({ error: "Please select your bank before uploading." }), { status: 400 });
       }
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -33,7 +41,7 @@ export async function POST(req: NextRequest) {
 
       let parsedData: ReturnType<typeof parseTransactions>;
       try {
-        parsedData = parseTransactions(parsedText);
+        parsedData = parseTransactions(parsedText, bank as Bank);
       } catch {
         return new NextResponse(JSON.stringify({ error: "Could not find transaction data in this statement." }), { status: 422 });
       }

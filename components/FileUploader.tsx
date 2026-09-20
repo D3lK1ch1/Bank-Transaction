@@ -5,6 +5,7 @@ import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
+import type { Bank } from "@/lib/transactionParser";
 
 interface FileUploadProgress {
   progress: number;
@@ -15,6 +16,11 @@ const PdfColor = {
   bgColor: "bg-blue-400",
   fillColor: "fill-blue-400",
 };
+
+const BANK_OPTIONS: { value: Bank; label: string }[] = [
+  { value: "anz", label: "ANZ" },
+  { value: "commonwealth", label: "Commonwealth Bank (CBA)" },
+];
 
 export default function FileUpload({
   onFileUpload,
@@ -27,6 +33,7 @@ export default function FileUpload({
 }) {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [filesToUpload, setFilesToUpload] = useState<FileUploadProgress[]>([]);
+  const [bank, setBank] = useState<Bank | "">("");
 
   const getFileIconAndColor = (file: File) => {
     if (file.type.includes("pdf")) {
@@ -48,6 +55,7 @@ export default function FileUpload({
   const uploadFileToApi = async (file: File) => {
     const formData = new FormData();
     formData.append("FILE", file);
+    formData.append("bank", bank);
 
     setErrorMsg(null);
     try {
@@ -79,7 +87,7 @@ export default function FileUpload({
 
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
-      if (acceptedFiles.length > 1) {   
+      if (acceptedFiles.length > 1) {
         setErrorMsg("You can only upload one file at a time.");
         return;
       }
@@ -93,7 +101,7 @@ export default function FileUpload({
       onFileUpload(file);
       await uploadFileToApi(file);
     },
-    [onFileUpload]
+    [onFileUpload, bank]
   );
 
   const { getRootProps, getInputProps } = useDropzone({
@@ -102,25 +110,52 @@ export default function FileUpload({
       "application/pdf": [".pdf"],
     },
     maxSize: maxSize,
+    disabled: !bank,
   });
 
   return (
     <div>
       <div>
+        <label htmlFor="bank-select" className="block text-sm font-medium text-gray-700 mb-1">
+          Bank
+        </label>
+        <select
+          id="bank-select"
+          value={bank}
+          onChange={(e) => setBank(e.target.value as Bank)}
+          className="w-full mb-3 border border-gray-300 rounded-md p-2 text-sm bg-white"
+        >
+          <option value="" disabled>
+            Select your bank&hellip;
+          </option>
+          {BANK_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+
         <label
           {...getRootProps()}
-          className="relative flex flex-col items-center justify-center w-full py-6 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100"
+          className={`relative flex flex-col items-center justify-center w-full py-6 border-2 border-gray-300 border-dashed rounded-lg bg-gray-50 ${
+            bank ? "cursor-pointer hover:bg-gray-100" : "cursor-not-allowed opacity-60"
+          }`}
         >
           <div className="text-center">
             <div className="border p-2 rounded-md max-w-min mx-auto">
               <UploadCloud size={20} />
             </div>
             <p className="mt-2 text-sm text-gray-600">
-              <span className="font-semibold">Drag and drop your ANZ bank statement</span>
+              <span className="font-semibold">Drag and drop your bank statement</span>
             </p>
             <p className="text-xs text-gray-500">
-              ANZ PDFs only &middot; under 8 MB
+              PDF only &middot; under 8 MB
             </p>
+            {!bank && (
+              <p className="text-xs text-amber-600 mt-1">
+                Select your bank above to enable upload
+              </p>
+            )}
           </div>
         </label>
         <p className="mt-2 text-xs text-center text-gray-400">
