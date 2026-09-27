@@ -13,7 +13,7 @@ describe('Summary Calculations', () => {
          3 Jan Transaction 3                300.00     0.00     500.00
        `;
       
-      const result = parseTransactions(text);
+      const result = parseTransactions(text, 'anz');
       
       expect(result.summary.totalTransactions).toBe(3);
     });
@@ -27,7 +27,7 @@ describe('Summary Calculations', () => {
          3 Jan Deposit 3                    0.00     500.00   3500.00
        `;
       
-      const result = parseTransactions(text);
+      const result = parseTransactions(text, 'anz');
       
       expect(result.summary.totalDeposits).toBe(3500.00);
     });
@@ -41,7 +41,7 @@ describe('Summary Calculations', () => {
          3 Jan Purchase 3                 50.00     0.00    4700.00
        `;
       
-      const result = parseTransactions(text);
+      const result = parseTransactions(text, 'anz');
       
       expect(result.summary.totalWithdrawals).toBe(400.00);
     });
@@ -56,7 +56,7 @@ describe('Summary Calculations', () => {
          4 Jan Transfer In             0.00    500.00   2643.77
        `;
       
-      const result = parseTransactions(text);
+      const result = parseTransactions(text, 'anz');
       
       const expectedNet = 4000.00 - 1356.23;
       expect(result.summary.netAmount).toBeCloseTo(expectedNet, 2);
@@ -74,7 +74,7 @@ describe('Summary Calculations', () => {
          6 Jan Entertainment           120.00    0.00    2773.77
        `;
       
-      const result = parseTransactions(text);
+      const result = parseTransactions(text, 'anz');
       
       expect(result.summary.totalTransactions).toBe(6);
       expect(result.summary.totalDeposits).toBe(4300.00);
@@ -91,7 +91,7 @@ describe('Summary Calculations', () => {
           ${transactions.map(t => ` 1 Jan ${t.description} ${t.type === 'debit' ? `${t.amount} 0.00` : `0.00 ${t.amount}`} 10000`).join('\n')}
         `;
         
-        const result = parseTransactions(text);
+        const result = parseTransactions(text, 'anz');
         
         expect(result.summary.totalDeposits).toBe(expected.totalDeposits);
         expect(result.summary.totalWithdrawals).toBe(expected.totalWithdrawals);
@@ -107,7 +107,7 @@ describe('Summary Calculations', () => {
         -----------------------------------------------------------------
       `;
       
-      const result = parseTransactions(text);
+      const result = parseTransactions(text, 'anz');
       
       expect(result.summary.totalTransactions).toBe(0);
       expect(result.summary.totalDeposits).toBe(0);
@@ -123,7 +123,7 @@ describe('Summary Calculations', () => {
          2 Jan Deposit 2                    0.00    2000.00  3000.00
        `;
       
-      const result = parseTransactions(text);
+      const result = parseTransactions(text, 'anz');
       
       expect(result.summary.totalDeposits).toBe(3000.00);
       expect(result.summary.totalWithdrawals).toBe(0);
@@ -138,7 +138,7 @@ describe('Summary Calculations', () => {
          2 Jan Purchase 2                200.00    0.00     800.00
        `;
       
-      const result = parseTransactions(text);
+      const result = parseTransactions(text, 'anz');
       
       expect(result.summary.totalDeposits).toBe(0);
       expect(result.summary.totalWithdrawals).toBe(300.00);
@@ -154,7 +154,7 @@ describe('Summary Calculations', () => {
          3 Jan Purchase 2                  0.01     0.00    1134.56
        `;
       
-      const result = parseTransactions(text);
+      const result = parseTransactions(text, 'anz');
       
       expect(result.summary.totalDeposits).toBeCloseTo(1234.56, 2);
       expect(result.summary.totalWithdrawals).toBeCloseTo(100.00, 2);
@@ -168,7 +168,7 @@ describe('Summary Calculations', () => {
          2 Jan Big Purchase          500000.00    0.00    500000.00
        `;
       
-      const result = parseTransactions(text);
+      const result = parseTransactions(text, 'anz');
       
       expect(result.summary.totalDeposits).toBe(1000000.00);
       expect(result.summary.totalWithdrawals).toBe(500000.00);
@@ -184,7 +184,7 @@ describe('Summary Calculations', () => {
          1 Jan Transaction                 100.00    0.00    1000.00
        `;
       
-      const result = parseTransactions(text);
+      const result = parseTransactions(text, 'anz');
       
       expect(result.summary).toHaveProperty('totalTransactions');
       expect(result.summary).toHaveProperty('totalDeposits');
@@ -199,7 +199,7 @@ describe('Summary Calculations', () => {
          1 Jan Transaction                 100.00    0.00    1000.00
        `;
       
-      const result = parseTransactions(text);
+      const result = parseTransactions(text, 'anz');
       
       expect(typeof result.summary.totalTransactions).toBe('number');
       expect(typeof result.summary.totalDeposits).toBe('number');

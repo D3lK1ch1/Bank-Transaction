@@ -2,7 +2,7 @@ import type { Transaction, ParsedData } from '../types';
 
 export type { Transaction, ParsedData } from '../types';
 
-export type { FormatType, HeaderInfo } from './types';
+export type { FormatType, HeaderInfo, Bank } from './types';
 
 export { getMonthNumber } from './utils';
 export { findTransactionHeader } from './detector';
@@ -19,14 +19,15 @@ import { filterSummaryRows } from './filter';
 import { categorizeTransactions, groupByMonth } from './group';
 import { generateSummary } from './summarize';
 import { getCategoryFromDescription } from '../categories';
+import type { Bank } from './types';
 
 const MERGED_ANZ_PREFIX_REGEX = /^(\d{1,2}\s+[A-Z]{3})(ANZ|VISA|EFTPOS|PAYMENT|MTS)\b/i;
 const CATEGORY_LINE_REGEX = /^(groceries|food|transport|utilities|rent|education|shopping|entertainment|healthcare|friends|misc)$/i;
 
-export function parseTransactions(rawText: string): ParsedData {
+export function parseTransactions(rawText: string, bank: Bank): ParsedData {
   const lines = rawText.split('\n').map(line => normalizeLine(line.trim())).filter(l => l);
-  
-  const headerInfo = findTransactionHeader(lines);
+
+  const headerInfo = findTransactionHeader(lines, bank);
   
   const transactions: Transaction[] = [];
   let currentYear: number | null = null;

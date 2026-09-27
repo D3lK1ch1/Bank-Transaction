@@ -1,5 +1,92 @@
 import { Transaction } from '@/lib/transactionParser';
 
+// Verbatim excerpt of pdf-parse output for the real CBA sample PDF
+// (drive-download-20260112T112409Z-3-001/Australia Commonwealth J C.pdf, lines 0-79),
+// captured via probe-cba-text.ts. Not hand-written — the May 2026 multi-bank rollback
+// was caused by fictional fixtures that passed tests but failed on real PDFs; this
+// fixture exists so CBA tests can't repeat that mistake.
+export const sampleCommonwealthFormatText = `
+
+
+
+
+
+
+
+
+
+
+MR JOHN CITIZEN
+SITE 130 351 BEAMS RD
+TAIGUM QLD 4018
+037
+Your Statement
+Statement 2 (Page 1 of 23)
+Account Number 06 4791 10044706
+
+
+Statement
+Period 1 Jul 2021 - 30 Dec 2021
+
+
+Closing Balance $17,259.72 CR
+
+
+Enquiries 13 2221
+(24 hours a day, 7 days a week)
+
+Smart Access
+Enjoy the convenience and security of withdrawing what you need, when you need it. Plus you can have your
+monthly account fee waived if you deposit at least $2,000 each calendar month.
+Name: RONALD GUALTER MANDIGMA
+Note: Please check that the entries listed on this statement are correct. For further information on your
+account including; details of features, fees, any errors or complaints, please contact us on the
+details above. Proceeds of cheques are not available until cleared.
+Date
+Transaction Debit Credit Balance
+01 Jul 2021 OPENING BALANCE
+
+$4,995.73 CR
+01 Jul CREDIT INTEREST EARNED on this account
+
+to June 30, 2021 is $0.06
+
+01 Jul TPG INTERNET PTY LTD NORTH RYDE NS AUS
+
+Card xx7831
+
+
+Value Date: 27/06/2021 59.99
+
+$4,935.74 CR
+01 Jul WORLDREMIT LTD LONDON W14 8U GB GBR
+ Card xx7831 AUD 53.49
+
+Value Date: 26/06/2021 53.49
+
+$4,882.25 CR
+01 Jul PAYPAL *35MM 4029357733 AU AUS
+
+Card xx7831
+
+
+Value Date: 25/06/2021 10.75
+
+$4,871.50 CR
+02 Jul OPTUS BILLING PAY MY B MACQUARIE PAR NS
+
+
+Card xx7831
+
+
+Value Date: 29/06/2021 508.00
+
+$4,363.50 CR
+02 Jul WORLDREMIT LTD LONDON W14 8U GB GBR
+
+ Card xx7831 AUD 67.98
+`;
+
 export const sampleColumnFormatText = `
 ANZ Bank Statement
 

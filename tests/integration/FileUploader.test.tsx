@@ -20,6 +20,10 @@ const createMockFile = (name: string, size: number, type: string) => {
   return file;
 };
 
+const selectBank = async (bank: 'ANZ' | 'Commonwealth Bank (CBA)' = 'ANZ') => {
+  await userEvent.selectOptions(screen.getByLabelText(/bank/i), bank);
+};
+
 describe('FileUploader', () => {
   const defaultProps = {
     onFileUpload: mockOnFileUpload,
@@ -35,15 +39,65 @@ describe('FileUploader', () => {
   describe('Rendering', () => {
     it('should render the file uploader component', () => {
       render(<FileUploader {...defaultProps} />);
-      
+
       expect(screen.getByText(/drag and drop/i)).toBeTruthy();
-      expect(screen.getByText(/ANZ PDFs only/i)).toBeTruthy();
+      expect(screen.getByText(/PDF only/i)).toBeTruthy();
     });
 
     it('should show file size limit information', () => {
       render(<FileUploader {...defaultProps} />);
 
       expect(screen.getByText(/8 MB/i)).toBeTruthy();
+    });
+
+    it('should render a bank selector with ANZ and Commonwealth options', () => {
+      render(<FileUploader {...defaultProps} />);
+
+      const select = screen.getByLabelText(/bank/i);
+      expect(select).toBeTruthy();
+      expect(screen.getByText('ANZ')).toBeTruthy();
+      expect(screen.getByText('Commonwealth Bank (CBA)')).toBeTruthy();
+    });
+  });
+
+  describe('Bank Selection Gating', () => {
+    it('should not upload a dropped file until a bank is selected', async () => {
+      (global.fetch as any).mockResolvedValue({
+        ok: true,
+        json: async () => ({ transactions: [] }),
+      });
+
+      render(<FileUploader {...defaultProps} />);
+
+      const pdfFile = createMockFile('test.pdf', 1000, 'application/pdf');
+
+      await act(async () => {
+        const input = screen.getByTestId('input');
+        await userEvent.upload(input, pdfFile);
+      });
+
+      expect(mockOnFileUpload).not.toHaveBeenCalled();
+    });
+
+    it('should allow upload once a bank is selected', async () => {
+      (global.fetch as any).mockResolvedValue({
+        ok: true,
+        json: async () => ({ transactions: [] }),
+      });
+
+      render(<FileUploader {...defaultProps} />);
+      await selectBank('ANZ');
+
+      const pdfFile = createMockFile('test.pdf', 1000, 'application/pdf');
+
+      await act(async () => {
+        const input = screen.getByTestId('input');
+        await userEvent.upload(input, pdfFile);
+      });
+
+      await waitFor(() => {
+        expect(mockOnFileUpload).toHaveBeenCalled();
+      });
     });
   });
 
@@ -55,9 +109,10 @@ describe('FileUploader', () => {
       });
 
       render(<FileUploader {...defaultProps} />);
-      
+      await selectBank();
+
       const smallFile = createMockFile('test.pdf', 1000, 'application/pdf');
-      
+
       await act(async () => {
         const input = screen.getByTestId('input');
         await userEvent.upload(input, smallFile);
@@ -77,6 +132,7 @@ describe('FileUploader', () => {
       });
 
       render(<FileUploader {...defaultProps} />);
+      await selectBank();
       
       const pdfFile = createMockFile('test.pdf', 1000, 'application/pdf');
       
@@ -97,6 +153,7 @@ describe('FileUploader', () => {
       });
 
       render(<FileUploader {...defaultProps} />);
+      await selectBank();
       
       const pdfFile = createMockFile('test.pdf', 1000, 'application/pdf');
       
@@ -127,6 +184,7 @@ describe('FileUploader', () => {
       });
 
       render(<FileUploader {...defaultProps} />);
+      await selectBank();
       
       const pdfFile = createMockFile('test.pdf', 1000, 'application/pdf');
       
@@ -148,6 +206,7 @@ describe('FileUploader', () => {
       });
 
       render(<FileUploader {...defaultProps} />);
+      await selectBank();
       
       const pdfFile = createMockFile('test.pdf', 1000, 'application/pdf');
       
@@ -190,6 +249,7 @@ describe('FileUploader', () => {
       });
 
       render(<FileUploader {...defaultProps} />);
+      await selectBank();
       
       const pdfFile = createMockFile('my-bank-statement.pdf', 1000, 'application/pdf');
       
@@ -210,6 +270,7 @@ describe('FileUploader', () => {
       });
 
       render(<FileUploader {...defaultProps} />);
+      await selectBank();
       
       const longName = 'a'.repeat(50) + '.pdf';
       const pdfFile = createMockFile(longName, 1000, 'application/pdf');

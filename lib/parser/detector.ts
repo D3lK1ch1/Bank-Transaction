@@ -1,6 +1,6 @@
-import type { HeaderInfo, FormatType } from './types';
+import type { HeaderInfo, FormatType, Bank } from './types';
 
-const HEADER_PATTERNS = [
+const ANZ_HEADER_PATTERNS = [
   /date.*transaction.*withdrawal.*deposit/i,
   /date.*transaction.*detail.*withdrawal.*deposit/i,
   /date.*description.*withdrawal.*deposit/i,
@@ -8,13 +8,23 @@ const HEADER_PATTERNS = [
   /date.*transaction.*amount/i,
 ];
 
-export function findTransactionHeader(lines: string[]): HeaderInfo {
+const TRANSACTION_DATE_LINE_REGEX = /^\d{1,2}\s+[A-Z]{3}/i;
+
+export function findTransactionHeader(lines: string[], bank: Bank): HeaderInfo {
+  if (bank === 'commonwealth') {
+    return findCommonwealthHeader(lines);
+  }
+
+  return findAnzHeader(lines);
+}
+
+function findAnzHeader(lines: string[]): HeaderInfo {
   let headerIndex = -1;
   let headerLine = '';
-  
+
   for (let i = 0; i < Math.min(lines.length, 100); i++) {
     const line = lines[i];
-    if (HEADER_PATTERNS.some(p => p.test(line))) {
+    if (ANZ_HEADER_PATTERNS.some(p => p.test(line))) {
       headerIndex = i;
       headerLine = line;
       break;
@@ -33,22 +43,51 @@ export function findTransactionHeader(lines: string[]): HeaderInfo {
       break;
     }
   }
-  
+
   if (headerIndex === -1) {
     for (let i = 0; i < Math.min(lines.length, 200); i++) {
-      if (/^\d{1,2}\s+[A-Z]{3}/i.test(lines[i])) {
+      if (TRANSACTION_DATE_LINE_REGEX.test(lines[i])) {
         headerIndex = i - 1;
         headerLine = lines[i - 1] || 'Unknown header';
         break;
       }
     }
   }
-  
+
   const startIndex = headerIndex >= 0 ? headerIndex + 1 : 0;
   const sampleLines = lines.slice(startIndex, startIndex + 50);
   const format = detectFormat(headerLine);
 
   return { headerLine, headerIndex, format, startIndex, sampleLines };
+}
+
+// CBA's header is split across two lines: "Date" then "Transaction Debit Credit Balance".
+function findCommonwealthHeader(lines: string[]): HeaderInfo {
+  let headerIndex = -1;
+  let headerLine = '';
+
+  for (let i = 0; i < Math.min(lines.length, 100) - 1; i++) {
+    if (/^date$/i.test(lines[i]) && /transaction/i.test(lines[i + 1]) && /debit/i.test(lines[i + 1]) && /credit/i.test(lines[i + 1]) && /balance/i.test(lines[i + 1])) {
+      headerIndex = i + 1;
+      headerLine = `${lines[i]} ${lines[i + 1]}`;
+      break;
+    }
+  }
+
+  if (headerIndex === -1) {
+    for (let i = 0; i < Math.min(lines.length, 200); i++) {
+      if (TRANSACTION_DATE_LINE_REGEX.test(lines[i])) {
+        headerIndex = i - 1;
+        headerLine = lines[i - 1] || 'Unknown header';
+        break;
+      }
+    }
+  }
+
+  const startIndex = headerIndex >= 0 ? headerIndex + 1 : 0;
+  const sampleLines = lines.slice(startIndex, startIndex + 50);
+
+  return { headerLine, headerIndex, format: 'commonwealth', startIndex, sampleLines };
 }
 
 function detectFormat(headerLine: string): FormatType {

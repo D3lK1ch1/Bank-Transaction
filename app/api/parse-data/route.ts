@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pdfParse = require("pdf-parse/lib/pdf-parse.js") as (buffer: Buffer) => Promise<{ text: string }>;
 import { parseTransactions } from "@/lib/transactionParser";
+import type { Bank } from "@/lib/transactionParser";
+
+const VALID_BANKS: Bank[] = ["anz", "commonwealth"];
 
 export async function POST(req: NextRequest) {
   const formData: FormData = await req.formData();
@@ -16,6 +19,11 @@ export async function POST(req: NextRequest) {
         return new NextResponse(JSON.stringify({ error: "Only PDF files are accepted. Please upload a bank statement PDF." }), { status: 400 });
       }
 
+      const bank = formData.get("bank");
+      if (typeof bank !== "string" || !VALID_BANKS.includes(bank as Bank)) {
+        return new NextResponse(JSON.stringify({ error: "Please select your bank before uploading." }), { status: 400 });
+      }
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       if (typeof (uploadedFile as any).size === 'number' && (uploadedFile as any).size > MAX_SIZE) {
         return new NextResponse(JSON.stringify({ error: "File too large. Maximum size is 8MB." }), { status: 413 });
@@ -23,9 +31,20 @@ export async function POST(req: NextRequest) {
 
       const fileBuffer = Buffer.from(await uploadedFile.arrayBuffer());
 
-      const data = await pdfParse(fileBuffer);
-      const parsedText = data.text;
-      const parsedData = parseTransactions(parsedText);
+      let parsedText: string;
+      try {
+        const data = await pdfParse(fileBuffer);
+        parsedText = data.text;
+      } catch {
+        return new NextResponse(JSON.stringify({ error: "Could not read this PDF. It may be corrupted or password-protected." }), { status: 422 });
+      }
+
+      let parsedData: ReturnType<typeof parseTransactions>;
+      try {
+        parsedData = parseTransactions(parsedText, bank as Bank);
+      } catch {
+        return new NextResponse(JSON.stringify({ error: "Could not find transaction data in this statement." }), { status: 422 });
+      }
 
       return new NextResponse(JSON.stringify({
         transactions: parsedData.transactions,

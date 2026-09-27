@@ -18,7 +18,7 @@ describe('Monthly Grouping', () => {
         25 Jan UNIVERSITY FEE            450.00      0.00    9966.00
       `;
       
-      const result = parseTransactions(text);
+      const result = parseTransactions(text, 'anz');
       
       expect(result.monthlyGrouped).toBeDefined();
       expect(Object.keys(result.monthlyGrouped).length).toBe(1);
@@ -38,7 +38,7 @@ describe('Monthly Grouping', () => {
          3 Mar Transaction Mar 1            500.00     0.00    3600.00
       `;
       
-      const result = parseTransactions(text);
+      const result = parseTransactions(text, 'anz');
       
       const currentYear = new Date().getFullYear().toString();
       expect(Object.keys(result.monthlyGrouped).length).toBe(3);
@@ -56,7 +56,7 @@ describe('Monthly Grouping', () => {
          1 Jan Transaction Jan               50.00    0.00     950.00
       `;
 
-      const result = parseTransactions(text);
+      const result = parseTransactions(text, 'anz');
       const months = Object.keys(result.monthlyGrouped);
 
       const currentYear = new Date().getFullYear();
@@ -73,7 +73,7 @@ describe('Monthly Grouping', () => {
         15 Jan Transaction Jan 2            75.00    0.00     875.00
       `;
 
-      const result = parseTransactions(text);
+      const result = parseTransactions(text, 'anz');
       const currentYear = new Date().getFullYear();
 
       expect(result.monthlyGrouped[`${currentYear}-11`].length).toBe(1);
@@ -147,7 +147,7 @@ describe('Monthly Grouping', () => {
       const result = parseTransactions(`
         Date Transaction Detail             Withdrawal  Deposit  Balance
         ${transactions.map(t => ` 1 ${t.date.split(' ')[1]} ${t.description} ${t.amount} 0.00 1000`).join('\n')}
-      `);
+      `, 'anz');
       
       expect(Object.keys(result.monthlyGrouped).length).toBe(12);
     });
@@ -160,7 +160,7 @@ describe('Monthly Grouping', () => {
         10 Jan PTV MYKI TOP UP            20.00      0.00   9980.00
       `;
       
-      const result = parseTransactions(text);
+      const result = parseTransactions(text, 'anz');
       const currentYear = new Date().getFullYear().toString();
       const janTransactions = result.monthlyGrouped[`${currentYear}-01`];
       
@@ -182,7 +182,7 @@ describe('Monthly Grouping', () => {
          1 Mar Transaction Mar              200.00    0.00     800.00
       `;
       
-      const result = parseTransactions(text);
+      const result = parseTransactions(text, 'anz');
       
       const currentYear = new Date().getFullYear().toString();
       expect(result.monthlyGrouped[`${currentYear}-02`]).toBeUndefined();
@@ -197,7 +197,7 @@ describe('Monthly Grouping', () => {
           ${transactions.map(t => ` ${t.date} ${t.description} ${t.type === 'debit' ? `${t.amount} 0.00` : `0.00 ${t.amount}`} 1000`).join('\n')}
         `;
         
-        const result = parseTransactions(text);
+        const result = parseTransactions(text, 'anz');
         
         expectedMonths.forEach(month => {
           expect(result.monthlyGrouped[month]).toBeDefined();
@@ -215,7 +215,7 @@ describe('Monthly Grouping', () => {
          1 Jan Single Transaction            100.00    0.00    1000.00
       `;
       
-      const result = parseTransactions(text);
+      const result = parseTransactions(text, 'anz');
       
       const currentYear = new Date().getFullYear().toString();
       expect(Object.keys(result.monthlyGrouped).length).toBe(1);
@@ -229,7 +229,7 @@ describe('Monthly Grouping', () => {
       }
       
       const text = lines.join('\n');
-      const result = parseTransactions(text);
+      const result = parseTransactions(text, 'anz');
       
       const currentYear = new Date().getFullYear().toString();
       expect(result.monthlyGrouped[`${currentYear}-01`].length).toBe(50);
