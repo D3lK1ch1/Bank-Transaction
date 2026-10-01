@@ -5,6 +5,33 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## Session 2026-10-02 — NAB support and per-bank parsers
+
+### Added
+- National Australia Bank (NAB) option in the bank selector and the `/api/parse-data` bank allowlist (`components/FileUploader.tsx`, `app/api/parse-data/route.ts`)
+- NAB parsing (`lib/parser/banks/nab.ts`):
+  - `Date Particulars Debits Credits Balance` header detection, including page 2's `DateParticulars` with no space
+  - two-line rows (the description, then a dot-leader amount line), with the date carried forward to every transaction on the same day
+  - `Brought forward` / `Carried forward` rows used for their balances only
+- NAB debit/credit inferred from the printed balance. When a balance appears, the pending amounts whose +/− combination matches the balance change are resolved. This also works on page 2, where each balance is printed one row late. Parsing throws if the amounts don't reconcile, rather than guessing.
+- NAB tests (`tests/unit/nabParser.test.ts`) against a verbatim pdf-parse fixture of the real sample statement. The 28 transactions match the statement's own totals (credits $12,242.57, debits $6,632.00).
+
+### Changed
+- Each bank now has its own regexes and parsing in `lib/parser/banks/{anz,commonwealth,nab}.ts`, each exporting a `BankParser` (`normalizeLine`, `findHeader`, `extractTransactions`). `detector.ts` is now only the `getBankParser(bank)` switch, and a missing bank fails to compile.
+- ANZ and CBA share the date-line/continuation loop in `lib/parser/rowWalker.ts`, but each passes in its own regexes. `lib/parser/extractor.ts` was removed.
+- ANZ line clean-up (merged prefixes, category lines, page noise) no longer runs on CBA or NAB statements
+- A statement that parses to zero transactions now throws, so `/api/parse-data` returns 422 instead of an empty $0 result. This applies to every bank, including a PDF uploaded under the wrong bank.
+- The refactor was checked by snapshotting the parse output of all 7 sample PDFs × 3 banks before and after: all 21 were identical
+
+### Known issues
+- The upload error path in `FileUploader.tsx` shows the raw JSON error, then fails `JSON.parse` in `HomePage.tsx`
+- "Internet Transfer" is categorised as utilities through the `internet` keyword
+- Category cards count deposits as spending
+- CBA debit/credit is still guessed from description keywords. CBA prints a balance on every row, so balance matching could replace this.
+- pdf-parse 1.1.1 logs a `Buffer()` deprecation warning from its bundled pdf.js
+
+---
+
 ## Session 2026-09-21 — Multi-bank support (Commonwealth Bank)
 
 ### Added

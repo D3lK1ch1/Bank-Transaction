@@ -1,6 +1,6 @@
 # Bank Transaction Analyser
 
-A personal finance web app that parses ANZ (and, in progress, Commonwealth Bank) statement PDFs and breaks down spending by category and month — no accounts, no storage, no data kept after upload.
+A personal finance web app that parses ANZ, Commonwealth and NAB statement PDFs and breaks down spending by category and month — no accounts, no storage, no data kept after upload.
 
 **Live:** [bank-transaction-taupe.vercel.app](https://bank-transaction-taupe.vercel.app)
 
@@ -16,7 +16,7 @@ A personal finance web app that parses ANZ (and, in progress, Commonwealth Bank)
 
 ## Features
 
-- Choose your bank (ANZ or Commonwealth Bank) before uploading — the upload zone stays disabled until you do
+- Choose your bank (ANZ / Commonwealth Bank / nab) before uploading — the upload zone stays disabled until you do
 - Drag-and-drop PDF upload — non-PDFs and files over 8MB are rejected
 - Commonwealth Bank support is **work in progress**: debit/credit is inferred from the description, and transactions split across a page break can be dropped. ANZ is the reliable path
 - Parses transactions: date, description, withdrawal, deposit, running balance
