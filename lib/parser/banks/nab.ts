@@ -1,5 +1,7 @@
-import type { Transaction } from '../types';
+import type { Transaction } from '../../types';
+import type { BankParser, HeaderInfo } from '../types';
 
+const HEADER_REGEX = /^\s*date\s*particulars\s+debits\s+credits\s+balance\s*$/i;
 const DATE_PREFIX_REGEX = /^(\d{1,2}\s+[A-Z][a-z]{2}\s+\d{4})\s*(.*)$/;
 const BALANCE_SUFFIX_REGEX = /(?:^|\s)(\d[\d,]*\.\d{2})\s+(Cr|Dr)$/i;
 const AMOUNT_SUFFIX_REGEX = /(?:^|[\s.])(\d[\d,]*\.\d{2})$/;
@@ -13,7 +15,29 @@ interface PendingTransaction {
   amount: number;
 }
 
-export function extractNabTransactions(lines: string[], startIndex: number): Transaction[] {
+export const nabParser: BankParser = {
+  normalizeLine: line => line,
+  findHeader,
+  extractTransactions: (lines, header) => extractTransactions(lines, header.startIndex),
+};
+
+function findHeader(lines: string[]): HeaderInfo {
+  const headerIndex = lines.findIndex(line => HEADER_REGEX.test(line));
+  if (headerIndex === -1) {
+    throw new Error('NAB transaction header not found');
+  }
+
+  const startIndex = headerIndex + 1;
+  return {
+    headerLine: lines[headerIndex].trim(),
+    headerIndex,
+    format: 'nab',
+    startIndex,
+    sampleLines: lines.slice(startIndex, startIndex + 50),
+  };
+}
+
+function extractTransactions(lines: string[], startIndex: number): Transaction[] {
   const transactions: Transaction[] = [];
   let pending: PendingTransaction[] = [];
   let descriptionBuffer: string[] = [];

@@ -1,4 +1,4 @@
-import type { Transaction, ParsedData } from '../types';
+import type { ParsedData } from '../types';
 
 export type { Transaction, ParsedData } from '../types';
 
@@ -6,33 +6,24 @@ export type { FormatType, HeaderInfo, Bank } from './types';
 
 export { getMonthNumber } from './utils';
 export { findTransactionHeader } from './detector';
-export { extractTransaction } from './extractor';
-export type { ExtractionResult } from './extractor';
 export { filterSummaryRows } from './filter';
 export { categorizeTransactions, groupByMonth, groupByDay } from './group';
 export type { DayTransaction } from './group';
 export { generateSummary } from './summarize';
 
-import { findTransactionHeader } from './detector';
-import { extractTransaction } from './extractor';
+import { getBankParser } from './detector';
 import { filterSummaryRows } from './filter';
 import { categorizeTransactions, groupByMonth } from './group';
 import { generateSummary } from './summarize';
 import { getCategoryFromDescription } from '../categories';
-import type { Bank, HeaderInfo } from './types';
-import { extractNabTransactions } from './nabExtractor';
-
-const MERGED_ANZ_PREFIX_REGEX = /^(\d{1,2}\s+[A-Z]{3})(ANZ|VISA|EFTPOS|PAYMENT|MTS)\b/i;
-const CATEGORY_LINE_REGEX = /^(groceries|food|transport|utilities|rent|education|shopping|entertainment|healthcare|friends|misc)$/i;
+import type { Bank } from './types';
 
 export function parseTransactions(rawText: string, bank: Bank): ParsedData {
-  const lines = rawText.split('\n').map(line => normalizeLine(line.trim())).filter(l => l);
+  const parser = getBankParser(bank);
+  const lines = rawText.split('\n').map(line => parser.normalizeLine(line.trim())).filter(l => l);
 
-  const headerInfo = findTransactionHeader(lines, bank);
-
-  const transactions = headerInfo.format === 'nab'
-    ? extractNabTransactions(lines, headerInfo.startIndex)
-    : extractRowByRow(lines, headerInfo);
+  const headerInfo = parser.findHeader(lines);
+  const transactions = parser.extractTransactions(lines, headerInfo);
 
   const filtered = filterSummaryRows(transactions);
   if (filtered.length === 0) {
@@ -43,53 +34,11 @@ export function parseTransactions(rawText: string, bank: Bank): ParsedData {
     ...t,
     category: getCategoryFromDescription(t.description)
   }));
-  
+
   return {
     transactions: transactionsWithCategories,
     categorized: categorizeTransactions(transactionsWithCategories),
     monthlyGrouped: groupByMonth(transactionsWithCategories),
     summary: generateSummary(transactionsWithCategories),
   };
-}
-
-function extractRowByRow(lines: string[], headerInfo: HeaderInfo): Transaction[] {
-  const transactions: Transaction[] = [];
-  let currentYear: number | null = null;
-
-  let i = headerInfo.startIndex;
-  while (i < lines.length) {
-    if (/^\d{4}$/.test(lines[i])) {
-      currentYear = parseInt(lines[i], 10);
-      i++;
-      continue;
-    }
-    const transaction = extractTransaction(lines, i, headerInfo.format);
-    if (transaction.parsed) {
-      if (currentYear !== null) {
-        transaction.transaction.date = `${transaction.transaction.date} ${currentYear}`;
-      }
-      transactions.push(transaction.transaction);
-      i = transaction.nextIndex;
-    } else {
-      i++;
-    }
-  }
-
-  return transactions;
-}
-
-function normalizeLine(line: string): string {
-  if (CATEGORY_LINE_REGEX.test(line)) {
-    return '';
-  }
-
-  if (/^totals at end of page|^anz access advantage statement|^account number \d|^page \d+ of \d+$/i.test(line)) {
-    return '';
-  }
-
-  if (line === '-' || line.toLowerCase() === 'blank') {
-    return '0.00';
-  }
-
-  return line.replace(MERGED_ANZ_PREFIX_REGEX, '$1 $2');
 }
