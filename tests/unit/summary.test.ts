@@ -101,18 +101,13 @@ describe('Summary Calculations', () => {
   });
 
   describe('Edge Cases', () => {
-    it('should handle zero transactions', () => {
+    it('should throw when a statement has zero transactions', () => {
       const text = `
         Date Transaction Detail             Withdrawal  Deposit  Balance
         -----------------------------------------------------------------
       `;
-      
-      const result = parseTransactions(text, 'anz');
-      
-      expect(result.summary.totalTransactions).toBe(0);
-      expect(result.summary.totalDeposits).toBe(0);
-      expect(result.summary.totalWithdrawals).toBe(0);
-      expect(result.summary.netAmount).toBe(0);
+
+      expect(() => parseTransactions(text, 'anz')).toThrow('No transactions found in statement');
     });
 
     it('should handle only deposits', () => {

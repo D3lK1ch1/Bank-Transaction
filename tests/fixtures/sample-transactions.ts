@@ -87,6 +87,80 @@ $4,363.50 CR
  Card xx7831 AUD 67.98
 `;
 
+// Verbatim excerpt of pdf-parse output for the real NAB sample PDF
+// (drive-download-20260112T112409Z-3-001/Australia NAB.pdf, lines 51-118: the full
+// transaction section across both pages), captured via probe-nab-text.ts.
+export const sampleNabFormatText = `
+Transaction Details 
+Date Particulars Debits Credits Balance 
+ 7 Sep 2022 Brought forward   26,659.01 Cr 
+ 9 Sep 2022 Interest Rate Brought Forward Is 0.11%  
+  Internet Transfer     t 
+  X Li .................................................................................. ...........20.00 
+  Internet Transfer     t 
+  X Li .............................................................................................. 100.00 
+  Internet Transfer     t 
+  X Li .............................................................................................. 150.00  26,389.01 Cr 
+ 12 Sep 2022 Internet Transfer     t 
+  X Li .............................................................................................. 110.00 
+  Internet Transfer     t 
+  X Li .......................................................................................... ...230.00  26,049.01 Cr 
+ 16 Sep 2022 Internet Transfer     Linked Acc Trns 
+  X Li ................................................................................................40.00  26,009.01 Cr 
+ 17 Sep 2022 Internet Transfer     t 
+  X Li .............................................................................................. 250.00  25,759.01 Cr 
+ 18 Sep 2022 Internet Transfer     t 
+  X Li ................................................................................................. 2.00 
+  Internet Transfer     t 
+  X Li ................................................................................................20.00 
+  Internet Transfer     t 
+  X Li ................................................................................................50.00  25,687.01 Cr 
+ 19 Sep 2022 Internet Transfer     t 
+  X Li ........................................................................................... ....90.00 
+  Internet Transfer     t 
+  X Li ........................................................................................... 1,600.00  23,997.01 Cr 
+ 20 Sep 2022 Internet Transfer     Linked Acc Trns 
+  X Li ................................................................................................40.00 
+  Internet Transfer     t 
+  X Li .............................................................................................. 180.00 
+  Internet Transfer     t 
+  X Li .............................................................................................. 200.00  23,577.01 Cr 
+ 26 Sep 2022 Internet Transfer     t 
+  X Li ..................................................................................................................... 12,240.00 35,817.01 Cr 
+ 30 Sep 2022 Interest  ........................... 2.57 
+  Internet Transfer     t 
+  Carried forward   35,819.58 Cr 
+
+ 
+Statement number 9  Page 2 of 2 
+ 
+ 
+Transaction Details (continued)  
+DateParticulars  Debits Credits Balance 
+  Brought forward 
+  X Li 50.00  35,819.58 Cr 
+  Internet Transfer     t 
+  X Li 90.00 
+ 1 Oct 2022 Internet Transfer     t   35,679.58 Cr 
+  X Li 30.00 
+ 2 Oct 2022 Internet Transfer     t   35,649.58 Cr 
+  X Li 60.00 
+ 4 Oct 2022 Internet Transfer     t   35,589.58 Cr 
+  X Li 500.00 
+  Internet Transfer     t   
+  X Li 2,100.00 
+ 7 Oct 2022 Internet Transfer     t   32,989.58 Cr 
+  X Li 200.00 
+  Internet Transfer     t   
+  X Li 200.00 
+ 8 Oct 2022 Internet Transfer     t   32,589.58 Cr 
+  X Li 100.00 
+ 14 Oct 2022 Internet Transfer     T   32,489.58 Cr 
+  X Li 70.00 
+  Internet Transfer     T 
+  X Li 150.00  32,269.58 Cr 
+`;
+
 export const sampleColumnFormatText = `
 ANZ Bank Statement
 

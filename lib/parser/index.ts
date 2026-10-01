@@ -19,7 +19,8 @@ import { filterSummaryRows } from './filter';
 import { categorizeTransactions, groupByMonth } from './group';
 import { generateSummary } from './summarize';
 import { getCategoryFromDescription } from '../categories';
-import type { Bank } from './types';
+import type { Bank, HeaderInfo } from './types';
+import { extractNabTransactions } from './nabExtractor';
 
 const MERGED_ANZ_PREFIX_REGEX = /^(\d{1,2}\s+[A-Z]{3})(ANZ|VISA|EFTPOS|PAYMENT|MTS)\b/i;
 const CATEGORY_LINE_REGEX = /^(groceries|food|transport|utilities|rent|education|shopping|entertainment|healthcare|friends|misc)$/i;
@@ -28,7 +29,30 @@ export function parseTransactions(rawText: string, bank: Bank): ParsedData {
   const lines = rawText.split('\n').map(line => normalizeLine(line.trim())).filter(l => l);
 
   const headerInfo = findTransactionHeader(lines, bank);
+
+  const transactions = headerInfo.format === 'nab'
+    ? extractNabTransactions(lines, headerInfo.startIndex)
+    : extractRowByRow(lines, headerInfo);
+
+  const filtered = filterSummaryRows(transactions);
+  if (filtered.length === 0) {
+    throw new Error('No transactions found in statement');
+  }
+
+  const transactionsWithCategories = filtered.map(t => ({
+    ...t,
+    category: getCategoryFromDescription(t.description)
+  }));
   
+  return {
+    transactions: transactionsWithCategories,
+    categorized: categorizeTransactions(transactionsWithCategories),
+    monthlyGrouped: groupByMonth(transactionsWithCategories),
+    summary: generateSummary(transactionsWithCategories),
+  };
+}
+
+function extractRowByRow(lines: string[], headerInfo: HeaderInfo): Transaction[] {
   const transactions: Transaction[] = [];
   let currentYear: number | null = null;
 
@@ -50,20 +74,8 @@ export function parseTransactions(rawText: string, bank: Bank): ParsedData {
       i++;
     }
   }
-  
-  const filtered = filterSummaryRows(transactions);
 
-  const transactionsWithCategories = filtered.map(t => ({
-    ...t,
-    category: getCategoryFromDescription(t.description)
-  }));
-  
-  return {
-    transactions: transactionsWithCategories,
-    categorized: categorizeTransactions(transactionsWithCategories),
-    monthlyGrouped: groupByMonth(transactionsWithCategories),
-    summary: generateSummary(transactionsWithCategories),
-  };
+  return transactions;
 }
 
 function normalizeLine(line: string): string {

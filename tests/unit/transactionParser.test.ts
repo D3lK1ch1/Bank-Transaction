@@ -142,9 +142,7 @@ friends
 -
 $-432919512.00
 `;
-      const result = parseTransactions(text, 'anz');
-
-      expect(result.transactions).toHaveLength(0);
+      expect(() => parseTransactions(text, 'anz')).toThrow('No transactions found in statement');
     });
 
     it('should normalize merged ANZ date and transaction prefixes before parsing', () => {
