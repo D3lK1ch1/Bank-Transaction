@@ -9,13 +9,33 @@ const ANZ_HEADER_PATTERNS = [
 ];
 
 const TRANSACTION_DATE_LINE_REGEX = /^\d{1,2}\s+[A-Z]{3}/i;
+const NAB_HEADER_REGEX = /^\s*date\s*particulars\s+debits\s+credits\s+balance\s*$/i;
 
 export function findTransactionHeader(lines: string[], bank: Bank): HeaderInfo {
-  if (bank === 'commonwealth') {
-    return findCommonwealthHeader(lines);
+  switch (bank) {
+    case 'anz':
+      return findAnzHeader(lines);
+    case 'commonwealth':
+      return findCommonwealthHeader(lines);
+    case 'nab':
+      return findNabHeader(lines);
+  }
+}
+
+function findNabHeader(lines: string[]): HeaderInfo {
+  const headerIndex = lines.findIndex(line => NAB_HEADER_REGEX.test(line));
+  if (headerIndex === -1) {
+    throw new Error('NAB transaction header not found');
   }
 
-  return findAnzHeader(lines);
+  const startIndex = headerIndex + 1;
+  return {
+    headerLine: lines[headerIndex].trim(),
+    headerIndex,
+    format: 'nab',
+    startIndex,
+    sampleLines: lines.slice(startIndex, startIndex + 50),
+  };
 }
 
 function findAnzHeader(lines: string[]): HeaderInfo {

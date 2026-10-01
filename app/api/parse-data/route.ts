@@ -4,7 +4,7 @@ const pdfParse = require("pdf-parse/lib/pdf-parse.js") as (buffer: Buffer) => Pr
 import { parseTransactions } from "@/lib/transactionParser";
 import type { Bank } from "@/lib/transactionParser";
 
-const VALID_BANKS: Bank[] = ["anz", "commonwealth"];
+const VALID_BANKS: Bank[] = ["anz", "commonwealth", "nab"];
 
 export async function POST(req: NextRequest) {
   const formData: FormData = await req.formData();

@@ -20,6 +20,7 @@ const PdfColor = {
 const BANK_OPTIONS: { value: Bank; label: string }[] = [
   { value: "anz", label: "ANZ" },
   { value: "commonwealth", label: "Commonwealth Bank (CBA)" },
+  { value: "nab", label: "National Australia Bank (NAB)" },
 ];
 
 export default function FileUpload({
